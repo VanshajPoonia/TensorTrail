@@ -87,3 +87,14 @@ TensorTrail is organized around a few small building blocks:
 - `losses.py` defines objective functions.
 - `optim.py` updates trainable parameters in place.
 - `data.py` and `trainer.py` provide enough infrastructure to run complete training experiments.
+## How Autograd Works
+
+Each differentiable operation creates a new `Tensor` containing:
+
+- computed NumPy data
+- references to parent tensors
+- a small backward closure describing how output gradients flow to parents
+
+Calling `backward()` topologically sorts the dynamic computation graph, seeds the output gradient, and runs the backward closures in reverse order. Gradients accumulate into each tensor's `.grad`, so reused tensors correctly receive contributions from multiple branches.
+
+Broadcasting is handled by reducing output gradients back to each operand's original shape before accumulation.
