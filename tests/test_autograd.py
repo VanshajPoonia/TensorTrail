@@ -1,0 +1,74 @@
+import numpy as np
+
+from tensortrail import Tensor
+
+
+def test_basic_operation_gradients_accumulate_from_branches():
+    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = (x * x + x).sum()
+
+    y.backward()
+
+    np.testing.assert_allclose(x.grad, [3.0, 5.0, 7.0])
+
+
+def test_broadcasting_gradients():
+    x = Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], requires_grad=True)
+    b = Tensor([10.0, 20.0, 30.0], requires_grad=True)
+
+    y = (x + b).sum()
+    y.backward()
+
+    np.testing.assert_allclose(x.grad, np.ones_like(x.data))
+    np.testing.assert_allclose(b.grad, [2.0, 2.0, 2.0])
+
+
+def test_matmul_gradients():
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+    w = Tensor([[2.0, 0.0], [1.0, -1.0]], requires_grad=True)
+
+    y = (x @ w).sum()
+    y.backward()
+
+    np.testing.assert_allclose(x.grad, np.ones((2, 2)) @ w.data.T)
+    np.testing.assert_allclose(w.grad, x.data.T @ np.ones((2, 2)))
+
+
+def test_activation_gradients():
+    x = Tensor([-1.0, 0.0, 2.0], requires_grad=True)
+    y = (x.relu() + x.sigmoid() + x.tanh()).sum()
+    y.backward()
+
+    sigmoid = 1 / (1 + np.exp(-x.data))
+    expected = (x.data > 0) + sigmoid * (1 - sigmoid) + (1 - np.tanh(x.data) ** 2)
+    np.testing.assert_allclose(x.grad, expected)
+
+
+def test_finite_difference_gradient_check():
+    data = np.array([[0.2, -0.4], [0.7, 1.1]], dtype=float)
+    x = Tensor(data.copy(), requires_grad=True)
+
+    y = ((x * x).tanh().sum() + (x.exp().mean())) / 3.0
+    y.backward()
+
+    eps = 1e-6
+    numerical = np.zeros_like(data)
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            plus = data.copy()
+            minus = data.copy()
+            plus[i, j] += eps
+            minus[i, j] -= eps
+
+            f_plus = (
+                np.tanh(plus * plus).sum()
+                + np.exp(plus).mean()
+            ) / 3.0
+            f_minus = (
+                np.tanh(minus * minus).sum()
+                + np.exp(minus).mean()
+            ) / 3.0
+            numerical[i, j] = (f_plus - f_minus) / (2 * eps)
+
+    np.testing.assert_allclose(x.grad, numerical, rtol=1e-5, atol=1e-5)
+
