@@ -8,3 +8,16 @@ It is intentionally small, readable, and educational. The goal is not to compete
 Most machine learning projects use mature frameworks, which is the right choice for production. TensorTrail takes the opposite route for learning value: every important piece is implemented directly so the mechanics are visible.
 
 This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates numerical programming, API design, graph-based differentiation, neural network training, testing discipline, and documentation.
+## Features
+
+- NumPy-backed `Tensor` object
+- Reverse-mode autograd engine with topological graph traversal
+- Broadcasting-aware backward passes
+- Differentiable arithmetic, reductions, matrix multiplication, reshaping, transpose, and common activations
+- Stable softmax and log-softmax helpers
+- Minimal module system with `Linear`, `ReLU`, `Sigmoid`, `Tanh`, and `Sequential`
+- `MSELoss`, `BinaryCrossEntropyLoss`, and `CrossEntropyLoss`
+- `SGD`, SGD with momentum, and `Adam`
+- Offline `Dataset`, `DataLoader`, train/test split, XOR data, and synthetic MNIST-like data
+- Simple `Trainer` utility
+- Runnable examples and pytest coverage
