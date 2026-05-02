@@ -69,3 +69,11 @@ for _ in range(1000):
 
 print(model(x).data)
 ```
+## Running Examples
+
+```bash
+python examples/train_xor.py
+python examples/train_mnist_like.py
+```
+
+`train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything.
