@@ -21,3 +21,23 @@ This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates 
 - Offline `Dataset`, `DataLoader`, train/test split, XOR data, and synthetic MNIST-like data
 - Simple `Trainer` utility
 - Runnable examples and pytest coverage
+## Installation
+
+From the repository root:
+
+```bash
+cd tensortrail
+pip install -e .
+```
+
+For development tools:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Or install the lightweight requirements file:
+
+```bash
+pip install -r requirements.txt
+```
