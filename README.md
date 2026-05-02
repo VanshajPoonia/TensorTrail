@@ -3,11 +3,13 @@
 TensorTrail is a handcrafted neural network framework built from scratch in Python with NumPy: forging tensors, gradients, and neural networks from scratch.
 
 It is intentionally small, readable, and educational. The goal is not to compete with PyTorch or TensorFlow, but to show how the core ideas behind modern ML frameworks fit together: tensors, computational graphs, reverse-mode automatic differentiation, modules, losses, optimizers, data loading, and training loops.
+
 ## Why This Exists
 
 Most machine learning projects use mature frameworks, which is the right choice for production. TensorTrail takes the opposite route for learning value: every important piece is implemented directly so the mechanics are visible.
 
 This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates numerical programming, API design, graph-based differentiation, neural network training, testing discipline, and documentation.
+
 ## Features
 
 - NumPy-backed `Tensor` object
@@ -21,6 +23,7 @@ This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates 
 - Offline `Dataset`, `DataLoader`, train/test split, XOR data, and synthetic MNIST-like data
 - Simple `Trainer` utility
 - Runnable examples and pytest coverage
+
 ## Installation
 
 From the repository root:
@@ -41,6 +44,7 @@ Or install the lightweight requirements file:
 ```bash
 pip install -r requirements.txt
 ```
+
 ## Quick Usage
 
 ```python
@@ -69,6 +73,7 @@ for _ in range(1000):
 
 print(model(x).data)
 ```
+
 ## Running Examples
 
 ```bash
@@ -77,6 +82,7 @@ python examples/train_mnist_like.py
 ```
 
 `train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything.
+
 ## Architecture
 
 TensorTrail is organized around a few small building blocks:
@@ -87,6 +93,7 @@ TensorTrail is organized around a few small building blocks:
 - `losses.py` defines objective functions.
 - `optim.py` updates trainable parameters in place.
 - `data.py` and `trainer.py` provide enough infrastructure to run complete training experiments.
+
 ## How Autograd Works
 
 Each differentiable operation creates a new `Tensor` containing:
@@ -98,6 +105,7 @@ Each differentiable operation creates a new `Tensor` containing:
 Calling `backward()` topologically sorts the dynamic computation graph, seeds the output gradient, and runs the backward closures in reverse order. Gradients accumulate into each tensor's `.grad`, so reused tensors correctly receive contributions from multiple branches.
 
 Broadcasting is handled by reducing output gradients back to each operand's original shape before accumulation.
+
 ## Built From Scratch
 
 TensorTrail does not use PyTorch, TensorFlow, JAX, autograd, tinygrad, micrograd, scikit-learn models, or any existing ML/autograd framework.
@@ -114,3 +122,30 @@ The framework builds these pieces directly:
 - training loop
 
 NumPy is used only for numerical arrays and matrix operations.
+
+## Testing
+
+Run:
+
+```bash
+pytest
+```
+
+The test suite covers tensor creation, forward operations, gradients, broadcasting, matrix multiplication, activations, losses, modules, optimizers, XOR training, and finite-difference gradient checking.
+
+## Roadmap
+
+- Add convolution and pooling layers
+- Add dropout once the training/eval behavior is worth demonstrating
+- Add model serialization
+- Add gradient clipping
+- Add more numerical gradient checks
+- Add richer plotting for training histories
+- Add a small notebook walkthrough
+
+## Limitations
+
+TensorTrail is educational infrastructure, not production ML infrastructure. It is not optimized for speed, GPU execution, distributed training, mixed precision, large datasets, or deployment. The code favors clarity and inspectability over performance.
+
+That tradeoff is deliberate: TensorTrail is meant to make the trail from tensors to trained networks visible.
+
