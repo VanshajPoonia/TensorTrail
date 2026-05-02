@@ -77,3 +77,13 @@ python examples/train_mnist_like.py
 ```
 
 `train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything.
+## Architecture
+
+TensorTrail is organized around a few small building blocks:
+
+- `tensor.py` defines `Tensor`, graph tracking, and operation-level gradient rules.
+- `ops.py` exposes reusable operations such as `softmax`, `log_softmax`, `one_hot`, and `accuracy`.
+- `modules.py` provides neural network layers and composition.
+- `losses.py` defines objective functions.
+- `optim.py` updates trainable parameters in place.
+- `data.py` and `trainer.py` provide enough infrastructure to run complete training experiments.
