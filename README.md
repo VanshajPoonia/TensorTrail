@@ -98,3 +98,19 @@ Each differentiable operation creates a new `Tensor` containing:
 Calling `backward()` topologically sorts the dynamic computation graph, seeds the output gradient, and runs the backward closures in reverse order. Gradients accumulate into each tensor's `.grad`, so reused tensors correctly receive contributions from multiple branches.
 
 Broadcasting is handled by reducing output gradients back to each operand's original shape before accumulation.
+## Built From Scratch
+
+TensorTrail does not use PyTorch, TensorFlow, JAX, autograd, tinygrad, micrograd, scikit-learn models, or any existing ML/autograd framework.
+
+The framework builds these pieces directly:
+
+- tensor wrapper
+- computation graph
+- reverse-mode backpropagation
+- neural network layers
+- loss functions
+- optimizers
+- data loading
+- training loop
+
+NumPy is used only for numerical arrays and matrix operations.
