@@ -41,3 +41,31 @@ Or install the lightweight requirements file:
 ```bash
 pip install -r requirements.txt
 ```
+## Quick Usage
+
+```python
+from tensortrail import BinaryCrossEntropyLoss, Linear, Sequential, Sigmoid, Tanh, Tensor
+from tensortrail.optim import Adam
+
+x = Tensor([[0, 0], [0, 1], [1, 0], [1, 1]])
+y = Tensor([[0], [1], [1], [0]])
+
+model = Sequential(
+    Linear(2, 8),
+    Tanh(),
+    Linear(8, 1),
+    Sigmoid(),
+)
+
+loss_fn = BinaryCrossEntropyLoss()
+optimizer = Adam(model.parameters(), lr=0.05)
+
+for _ in range(1000):
+    predictions = model(x)
+    loss = loss_fn(predictions, y)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+print(model(x).data)
+```
