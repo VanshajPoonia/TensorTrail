@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Callable
 
 import numpy as np
@@ -38,11 +39,22 @@ class Trainer:
         print_every: int | None = None,
     ) -> dict[str, list[float]]:
         """Train a model and return history."""
-        history: dict[str, list[float]] = {"loss": []}
+        train_losses: list[float] = []
+        elapsed_times: list[float] = []
+        epochs_seen: list[float] = []
+        history: dict[str, list[float]] = {
+            "epoch": epochs_seen,
+            "train_loss": train_losses,
+            "elapsed_time": elapsed_times,
+            "loss": train_losses,
+        }
         if self.metric_fn is not None:
-            history["metric"] = []
+            accuracies: list[float] = []
+            history["accuracy"] = accuracies
+            history["metric"] = accuracies
 
         for epoch in range(1, epochs + 1):
+            start_time = time.perf_counter()
             loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, seed=epoch)
             losses: list[float] = []
             metrics: list[float] = []
@@ -58,12 +70,16 @@ class Trainer:
                     metrics.append(self.metric_fn(predictions, y_batch))
 
             mean_loss = float(np.mean(losses))
-            history["loss"].append(mean_loss)
-            message = f"epoch {epoch:03d} loss={mean_loss:.4f}"
+            elapsed = time.perf_counter() - start_time
+            history["epoch"].append(float(epoch))
+            history["train_loss"].append(mean_loss)
+            history["elapsed_time"].append(elapsed)
+            message = f"epoch {epoch:03d} train_loss={mean_loss:.4f}"
             if self.metric_fn is not None:
                 mean_metric = float(np.mean(metrics))
-                history["metric"].append(mean_metric)
-                message += f" metric={mean_metric:.4f}"
+                history["accuracy"].append(mean_metric)
+                message += f" accuracy={mean_metric:.4f}"
+            message += f" elapsed={elapsed:.3f}s"
             if print_every is not None and (epoch == 1 or epoch % print_every == 0):
                 print(message)
 
@@ -73,4 +89,3 @@ class Trainer:
 def classification_accuracy(logits: Tensor, labels: Tensor) -> float:
     """Metric helper for multi-class classification."""
     return accuracy(logits, labels)
-
