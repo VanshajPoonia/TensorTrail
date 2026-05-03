@@ -1,5 +1,7 @@
 # TensorTrail
 
+TensorTrail: forging tensors, gradients, and neural networks from scratch.
+
 TensorTrail is a handcrafted neural network framework built from scratch in Python with NumPy: forging tensors, gradients, and neural networks from scratch.
 
 It is intentionally small, readable, and educational. The goal is not to compete with PyTorch or TensorFlow, but to show how the core ideas behind modern ML frameworks fit together: tensors, computational graphs, reverse-mode automatic differentiation, modules, losses, optimizers, data loading, and training loops.
@@ -21,8 +23,10 @@ This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates 
 - `MSELoss`, `BinaryCrossEntropyLoss`, and `CrossEntropyLoss`
 - `SGD`, SGD with momentum, and `Adam`
 - Offline `Dataset`, `DataLoader`, train/test split, XOR data, and synthetic MNIST-like data
-- Simple `Trainer` utility
-- Runnable examples and pytest coverage
+- Simple `Trainer` utility with epoch, loss, accuracy, and elapsed-time history
+- Finite-difference gradient checking
+- NumPy `.npz` model parameter save/load helpers
+- Runnable examples, autograd documentation, benchmark script, and pytest coverage
 
 ## Installation
 
@@ -148,4 +152,3 @@ The test suite covers tensor creation, forward operations, gradients, broadcasti
 TensorTrail is educational infrastructure, not production ML infrastructure. It is not optimized for speed, GPU execution, distributed training, mixed precision, large datasets, or deployment. The code favors clarity and inspectability over performance.
 
 That tradeoff is deliberate: TensorTrail is meant to make the trail from tensors to trained networks visible.
-
