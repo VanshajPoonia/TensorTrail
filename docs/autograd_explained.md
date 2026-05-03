@@ -55,3 +55,32 @@ d/dx tanh(x) = 1 - tanh(x)^2
 ```
 
 This keeps the autograd engine generic: graph traversal is shared, while each operation owns its local derivative.
+## Gradient Accumulation
+
+A tensor can be used in more than one branch of a graph:
+
+```python
+y = x * x + x
+```
+
+Here `x` contributes through both `x * x` and `+ x`. During backpropagation, TensorTrail adds each contribution into `x.grad`. This accumulation is what makes shared parameters and branching computation graphs work.
+
+## Broadcasting Gradients
+
+NumPy broadcasting lets tensors of different shapes participate in one operation:
+
+```python
+x.shape == (4, 3)
+b.shape == (3,)
+y = x + b
+```
+
+The forward pass stretches `b` across the batch dimension. In the backward pass, the gradient for `b` must be reduced back to shape `(3,)`, summing over the broadcasted dimension.
+
+TensorTrail uses an internal unbroadcast helper to:
+
+- remove extra leading dimensions
+- sum over axes where the original operand had size `1`
+- reshape the gradient back to the operand's original shape
+
+Without this step, gradients for biases and other broadcasted tensors would have the wrong shape.
