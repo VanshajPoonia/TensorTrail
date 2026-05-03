@@ -52,6 +52,12 @@ def main() -> None:
     time_it("NumPy matmul", lambda: numpy_matmul(a, b), repeats=100)
     time_it("TensorTrail matmul", lambda: (a_tt @ b_tt).data, repeats=100)
     print()
+    def backward_pass() -> None:
+        a_grad.zero_grad()
+        b_grad.zero_grad()
+        ((a_grad @ b_grad).tanh().mean()).backward()
+
+    time_it("TensorTrail backward", backward_pass, repeats=50)
 
 
 if __name__ == "__main__":
