@@ -83,9 +83,23 @@ print(model(x).data)
 ```bash
 python examples/train_xor.py
 python examples/train_mnist_like.py
+python examples/benchmark_ops.py
 ```
 
-`train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything.
+`train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything. `benchmark_ops.py` compares TensorTrail operations against raw NumPy as an educational look at framework overhead.
+
+
+## What I Built From Scratch
+
+- Tensor object
+- Reverse-mode autodiff
+- Computational graph
+- Layer abstraction
+- Loss functions
+- Optimizers
+- Training loop
+- Gradient checking
+- Example models
 
 ## Architecture
 
