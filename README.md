@@ -88,7 +88,6 @@ python examples/benchmark_ops.py
 
 `train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything. `benchmark_ops.py` compares TensorTrail operations against raw NumPy as an educational look at framework overhead.
 
-
 ## What I Built From Scratch
 
 - Tensor object
@@ -111,6 +110,10 @@ TensorTrail is organized around a few small building blocks:
 - `losses.py` defines objective functions.
 - `optim.py` updates trainable parameters in place.
 - `data.py` and `trainer.py` provide enough infrastructure to run complete training experiments.
+- `gradcheck.py` validates analytical gradients against numerical finite differences.
+- `serialization.py` saves and loads model parameters with NumPy `.npz` files.
+
+For a deeper walkthrough of the autograd system, see `docs/autograd_explained.md`.
 
 ## How Autograd Works
 
@@ -138,6 +141,8 @@ The framework builds these pieces directly:
 - optimizers
 - data loading
 - training loop
+- gradient checker
+- save/load helpers
 
 NumPy is used only for numerical arrays and matrix operations.
 
@@ -155,9 +160,7 @@ The test suite covers tensor creation, forward operations, gradients, broadcasti
 
 - Add convolution and pooling layers
 - Add dropout once the training/eval behavior is worth demonstrating
-- Add model serialization
 - Add gradient clipping
-- Add more numerical gradient checks
 - Add richer plotting for training histories
 - Add a small notebook walkthrough
 
