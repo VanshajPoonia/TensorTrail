@@ -1,6 +1,6 @@
 from tensortrail import CrossEntropyLoss, Linear, ReLU, Sequential
 from tensortrail.data import make_mnist_like
-from tensortrail.optim import Adam
+from tensortrail.optim import Adam, SGD
 from tensortrail.trainer import Trainer, classification_accuracy
 
 
@@ -24,3 +24,31 @@ def test_trainer_records_richer_history_with_backward_compatible_aliases():
     assert history["metric"] is history["accuracy"]
     assert all(elapsed >= 0 for elapsed in history["elapsed_time"])
 
+
+def test_trainer_validation_early_stopping_and_checkpoint(tmp_path):
+    dataset = make_mnist_like(n_samples=90, n_features=6, n_classes=3, seed=8)
+    train_data = type(dataset)(dataset.x[:60], dataset.y[:60])
+    val_data = type(dataset)(dataset.x[60:], dataset.y[60:])
+    model = Sequential(Linear(6, 5, seed=1), ReLU(), Linear(5, 3, seed=2))
+    checkpoint_path = tmp_path / "best_model.npz"
+    trainer = Trainer(
+        model,
+        CrossEntropyLoss(),
+        SGD(model.parameters(), lr=0.0),
+        metric_fn=classification_accuracy,
+    )
+
+    history = trainer.fit(
+        train_data,
+        val_dataset=val_data,
+        epochs=10,
+        batch_size=15,
+        shuffle=False,
+        early_stopping_patience=2,
+        checkpoint_path=checkpoint_path,
+    )
+
+    assert len(history["epoch"]) == 3
+    assert len(history["val_loss"]) == 3
+    assert len(history["val_accuracy"]) == 3
+    assert checkpoint_path.exists()
