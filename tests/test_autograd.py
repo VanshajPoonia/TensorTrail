@@ -12,6 +12,44 @@ def test_basic_operation_gradients_accumulate_from_branches():
     np.testing.assert_allclose(x.grad, [3.0, 5.0, 7.0])
 
 
+def test_addition_gradient():
+    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = Tensor([0.5, -1.0, 2.0], requires_grad=True)
+
+    ((x + y) * Tensor([1.0, 2.0, 3.0])).sum().backward()
+
+    np.testing.assert_allclose(x.grad, [1.0, 2.0, 3.0])
+    np.testing.assert_allclose(y.grad, [1.0, 2.0, 3.0])
+
+
+def test_multiplication_gradient():
+    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = Tensor([4.0, 5.0, 6.0], requires_grad=True)
+
+    (x * y).sum().backward()
+
+    np.testing.assert_allclose(x.grad, y.data)
+    np.testing.assert_allclose(y.grad, x.data)
+
+
+def test_division_gradient():
+    x = Tensor([2.0, 4.0, 8.0], requires_grad=True)
+    y = Tensor([1.0, 2.0, 4.0], requires_grad=True)
+
+    (x / y).sum().backward()
+
+    np.testing.assert_allclose(x.grad, 1 / y.data)
+    np.testing.assert_allclose(y.grad, -x.data / (y.data**2))
+
+
+def test_power_gradient():
+    x = Tensor([2.0, 3.0, 4.0], requires_grad=True)
+
+    (x**3).sum().backward()
+
+    np.testing.assert_allclose(x.grad, 3 * x.data**2)
+
+
 def test_broadcasting_gradients():
     x = Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], requires_grad=True)
     b = Tensor([10.0, 20.0, 30.0], requires_grad=True)
@@ -71,4 +109,3 @@ def test_finite_difference_gradient_check():
             numerical[i, j] = (f_plus - f_minus) / (2 * eps)
 
     np.testing.assert_allclose(x.grad, numerical, rtol=1e-5, atol=1e-5)
-
