@@ -140,6 +140,21 @@ For deeper explanations, see:
 - `docs/autograd_explained.md`
 - `docs/framework_architecture.md`
 
+## Core Stability
+
+TensorTrail's core tests focus on the pieces that make an autodiff framework
+trustworthy:
+
+- scalar and non-scalar `backward()` behavior
+- gradient accumulation when a tensor feeds multiple graph branches
+- broadcasting-aware gradients for bias-like tensors
+- arithmetic, division, power, matrix multiplication, reductions, reshape, and transpose gradients
+- activation gradients for ReLU, sigmoid, and tanh
+- helpful errors for unsupported dtypes, missing external gradients, and invalid matmul shapes
+
+This keeps new layers and examples grounded in a small autograd engine whose
+behavior is directly tested.
+
 ## What I Built From Scratch
 
 - Tensor object
