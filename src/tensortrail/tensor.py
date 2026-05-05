@@ -17,7 +17,14 @@ def _ensure_array(data: ArrayLike) -> np.ndarray:
         return data.data
     array = np.asarray(data)
     if not np.issubdtype(array.dtype, np.number):
-        raise TypeError("Tensor data must be numeric.")
+        raise TypeError(
+            f"Tensor data must be real numeric values, got dtype {array.dtype}."
+        )
+    if np.issubdtype(array.dtype, np.complexfloating):
+        raise TypeError(
+            f"Tensor data must be real numeric values; complex dtype {array.dtype} "
+            "is not supported."
+        )
     return array.astype(float)
 
 

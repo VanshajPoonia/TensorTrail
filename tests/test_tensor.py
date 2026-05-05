@@ -31,3 +31,10 @@ def test_non_scalar_backward_with_external_gradient():
     y.backward(np.ones(3))
     np.testing.assert_allclose(x.grad, [2, 4, 6])
 
+
+def test_tensor_rejects_unsupported_dtypes():
+    with pytest.raises(TypeError, match="real numeric"):
+        Tensor(["not", "numbers"])
+
+    with pytest.raises(TypeError, match="complex dtype"):
+        Tensor(np.array([1 + 2j]))
