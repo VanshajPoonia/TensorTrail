@@ -120,13 +120,20 @@ class Tensor:
         """
         if grad is None:
             if self.data.size != 1:
-                raise ValueError("grad must be provided for non-scalar tensors.")
+                raise ValueError(
+                    "backward() called on a non-scalar Tensor with shape "
+                    f"{self.shape}; pass an external gradient with the same shape."
+                )
             grad_array = np.ones_like(self.data)
         else:
-            grad_array = np.asarray(grad, dtype=float)
+            try:
+                grad_array = _ensure_array(grad)
+            except TypeError as exc:
+                raise TypeError("backward() gradient must be real numeric values.") from exc
             if grad_array.shape != self.data.shape:
                 raise ValueError(
-                    f"grad shape {grad_array.shape} does not match tensor shape {self.data.shape}."
+                    f"backward() gradient shape {grad_array.shape} does not match "
+                    f"Tensor shape {self.data.shape}."
                 )
 
         topo: list[Tensor] = []
