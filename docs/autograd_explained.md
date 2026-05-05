@@ -1,76 +1,95 @@
 # Autograd Explained
 
-TensorTrail uses reverse-mode automatic differentiation, the same core idea that powers large machine learning frameworks. The implementation is intentionally small so the path from forward computation to gradients is visible.
+TensorTrail uses reverse-mode automatic differentiation. That is the same
+high-level idea behind large deep learning frameworks, but this version is small
+enough to read in one sitting.
+
+## Tensor Object
+
+`Tensor` wraps a NumPy array and adds three pieces of autograd state:
+
+- `requires_grad`, which says whether operations should be tracked.
+- `grad`, which stores accumulated gradients after `backward()`.
+- `_prev`, `_op`, and `_backward`, which describe how this tensor was created.
+
+Leaf tensors usually come from user data or model parameters. Intermediate
+tensors come from operations such as addition, matrix multiplication, reductions,
+and activations.
 
 ## Computational Graph
 
-Every `Tensor` stores NumPy data and, when gradients are required, references to the tensors that created it. For example:
+Every differentiable operation creates a new output `Tensor`. If any input
+requires gradients, the output stores references to its parent tensors. For
+example:
 
 ```python
-z = (x * y + x).sum()
+y = ((x * x).tanh()).sum()
 ```
 
-creates a small graph where `z` depends on addition, multiplication, and sum nodes, which ultimately depend on `x` and `y`.
+creates a graph with multiply, tanh, and sum nodes. The final scalar `y` points
+back through that graph to `x`.
 
-Each operation also stores a backward closure: a tiny function that knows how to pass the output gradient back to that operation's inputs.
+## Topological Sort
 
-## Topological Sorting
+Backpropagation has to run in dependency order. TensorTrail first walks backward
+from the final tensor with depth-first search and records a topological ordering:
+parents before children.
 
-Backpropagation must run from the final output back toward the original inputs. TensorTrail first walks the graph with depth-first search and records nodes in topological order, where parents appear before children.
-
-Then `backward()` reverses that order. This guarantees that when a node's backward closure runs, the gradient flowing into that node has already been accumulated.
+Then it reverses that list. This means each node's gradient has already been
+collected by the time its local backward function runs.
 
 ## Chain Rule
 
-The chain rule says that if one value depends on another through intermediate steps, gradients multiply along that path.
-
-For multiplication:
+The chain rule combines local derivatives into full derivatives. If:
 
 ```python
 z = x * y
+loss = z.sum()
 ```
 
-the local derivatives are:
+then the multiply operation knows:
 
 - `dz/dx = y`
 - `dz/dy = x`
 
-So the backward closure receives `dL/dz` and contributes:
+During backpropagation it receives `dLoss/dz` and contributes:
 
-- `dL/dx = dL/dz * y`
-- `dL/dy = dL/dz * x`
+- `dLoss/dx = dLoss/dz * y`
+- `dLoss/dy = dLoss/dz * x`
 
-TensorTrail encodes one of these small rules for every differentiable tensor operation.
+TensorTrail implements one small local derivative rule per operation.
 
 ## Backward Closures
 
-A backward closure is the operation-specific gradient recipe captured during the forward pass. It closes over:
+Each operation attaches a `_backward` closure to its output tensor. The closure
+captures the input tensors and any values needed to compute derivatives.
 
-- the input tensors
-- the output tensor
-- any values needed for the derivative
-
-For `tanh`, the forward pass stores the computed `tanh(x)` value. The backward closure reuses it to apply:
+For `tanh`, the forward pass computes `tanh(x)`. The backward closure reuses
+that value:
 
 ```text
 d/dx tanh(x) = 1 - tanh(x)^2
 ```
 
-This keeps the autograd engine generic: graph traversal is shared, while each operation owns its local derivative.
+The graph traversal code stays generic; each operation owns its own gradient
+recipe.
 
 ## Gradient Accumulation
 
-A tensor can be used in more than one branch of a graph:
+A tensor can feed multiple graph branches:
 
 ```python
 y = x * x + x
 ```
 
-Here `x` contributes through both `x * x` and `+ x`. During backpropagation, TensorTrail adds each contribution into `x.grad`. This accumulation is what makes shared parameters and branching computation graphs work.
+The same `x` contributes through both the multiply branch and the addition
+branch. TensorTrail adds each contribution into `x.grad`. This is why model
+parameters can be reused across many examples in a batch and still receive the
+correct total gradient.
 
 ## Broadcasting Gradients
 
-NumPy broadcasting lets tensors of different shapes participate in one operation:
+NumPy broadcasting expands smaller arrays during the forward pass:
 
 ```python
 x.shape == (4, 3)
@@ -78,13 +97,24 @@ b.shape == (3,)
 y = x + b
 ```
 
-The forward pass stretches `b` across the batch dimension. In the backward pass, the gradient for `b` must be reduced back to shape `(3,)`, summing over the broadcasted dimension.
+The bias `b` is used once per row. In the backward pass, its gradient must be
+summed back down to shape `(3,)`. TensorTrail's unbroadcast helper removes extra
+leading dimensions and sums axes where the original input had size `1`.
 
-TensorTrail uses an internal unbroadcast helper to:
+Without this step, gradients for biases and BatchNorm parameters would have the
+wrong shape.
 
-- remove extra leading dimensions
-- sum over axes where the original operand had size `1`
-- reshape the gradient back to the operand's original shape
+## Why Gradient Checking Matters
 
-Without this step, gradients for biases and other broadcasted tensors would have the wrong shape.
+Autograd code can look correct while hiding small shape or sign bugs. Gradient
+checking compares TensorTrail's analytical gradients with numerical finite
+differences:
+
+```text
+df/dx ~= (f(x + eps) - f(x - eps)) / (2 * eps)
+```
+
+It is too slow for training, but excellent for testing new operations. If a
+smooth scalar-valued function passes gradient checking, the local backward rules
+used by that function are much more trustworthy.
 

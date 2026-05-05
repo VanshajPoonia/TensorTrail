@@ -2,170 +2,183 @@
 
 TensorTrail: forging tensors, gradients, and neural networks from scratch.
 
-TensorTrail is a handcrafted neural network framework built from scratch in Python with NumPy: forging tensors, gradients, and neural networks from scratch.
+TensorTrail is a compact deep learning framework built from scratch with Python
+and NumPy. It is intentionally educational: the code is small enough to read,
+but complete enough to train neural networks, inspect autograd graphs, checkpoint
+models, and test gradients.
 
-It is intentionally small, readable, and educational. The goal is not to compete with PyTorch or TensorFlow, but to show how the core ideas behind modern ML frameworks fit together: tensors, computational graphs, reverse-mode automatic differentiation, modules, losses, optimizers, data loading, and training loops.
+The goal is not to beat PyTorch or TensorFlow. The goal is to show that the core
+pieces of a modern neural network framework can be built directly: tensors,
+reverse-mode autodiff, layers, losses, optimizers, training loops, model
+serialization, graph visualization, and tests.
 
-## Why This Exists
-
-Most machine learning projects use mature frameworks, which is the right choice for production. TensorTrail takes the opposite route for learning value: every important piece is implemented directly so the mechanics are visible.
-
-This makes TensorTrail a resume-quality systems-and-ML project. It demonstrates numerical programming, API design, graph-based differentiation, neural network training, testing discipline, and documentation.
-
-## Features
+## Feature Checklist
 
 - NumPy-backed `Tensor` object
-- Reverse-mode autograd engine with topological graph traversal
-- Broadcasting-aware backward passes
-- Differentiable arithmetic, reductions, matrix multiplication, reshaping, transpose, and common activations
-- Stable softmax and log-softmax helpers
-- Minimal module system with `Linear`, `ReLU`, `Sigmoid`, `Tanh`, and `Sequential`
-- `MSELoss`, `BinaryCrossEntropyLoss`, and `CrossEntropyLoss`
-- `SGD`, SGD with momentum, and `Adam`
-- Offline `Dataset`, `DataLoader`, train/test split, XOR data, and synthetic MNIST-like data
-- Simple `Trainer` utility with epoch, loss, accuracy, and elapsed-time history
-- Finite-difference gradient checking
-- NumPy `.npz` model parameter save/load helpers
-- Runnable examples, autograd documentation, benchmark script, and pytest coverage
+- Reverse-mode automatic differentiation
+- Dynamic computation graph with operation names
+- Broadcasting-aware gradients
+- Gradient checker with finite differences
+- Graphviz DOT computation graph export
+- Layers: `Linear`, `Flatten`, `Dropout`, `BatchNorm1D`, `ReLU`, `Sigmoid`, `Tanh`
+- `Sequential` model composition
+- Losses: MSE, binary cross entropy, multi-class cross entropy
+- Optimizers: SGD, momentum SGD, Adam
+- Offline datasets and mini-batch `DataLoader`
+- Trainer with validation, metrics, early stopping, and checkpoint saving
+- NumPy `.npz` model save/load
+- Runnable examples and pytest coverage
 
 ## Installation
 
-From the repository root:
-
 ```bash
-cd tensortrail
 pip install -e .
 ```
 
-For development tools:
+For development:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-Or install the lightweight requirements file:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Quick Usage
+## Quickstart
 
 ```python
-from tensortrail import BinaryCrossEntropyLoss, Linear, Sequential, Sigmoid, Tanh, Tensor
-from tensortrail.optim import Adam
+from tensortrail import Linear, ReLU, Sequential, Tensor
 
-x = Tensor([[0, 0], [0, 1], [1, 0], [1, 1]])
-y = Tensor([[0], [1], [1], [0]])
+x = Tensor([[1.0, 2.0, 3.0]])
+model = Sequential(
+    Linear(3, 8, seed=1),
+    ReLU(),
+    Linear(8, 2, seed=2),
+)
 
+logits = model(x)
+print(logits)
+```
+
+## XOR Example
+
+```bash
+python examples/train_xor.py
+```
+
+This trains a tiny MLP on the XOR truth table:
+
+```python
 model = Sequential(
     Linear(2, 8),
     Tanh(),
     Linear(8, 1),
     Sigmoid(),
 )
-
-loss_fn = BinaryCrossEntropyLoss()
-optimizer = Adam(model.parameters(), lr=0.05)
-
-for _ in range(1000):
-    predictions = model(x)
-    loss = loss_fn(predictions, y)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-print(model(x).data)
 ```
 
-## Running Examples
+## MLP Classifier Example
 
 ```bash
-python examples/train_xor.py
-python examples/train_mnist_like.py
-python examples/benchmark_ops.py
+python examples/train_mlp_classifier.py
 ```
 
-`train_xor.py` trains a tiny MLP to learn the XOR truth table. `train_mnist_like.py` creates a synthetic flattened-image classification dataset and trains a small classifier without downloading anything. `benchmark_ops.py` compares TensorTrail operations against raw NumPy as an educational look at framework overhead.
+The classifier example generates an offline synthetic multi-class dataset and
+trains:
+
+```python
+model = Sequential(
+    Linear(32, 24),
+    BatchNorm1D(24),
+    ReLU(),
+    Dropout(p=0.15),
+    Linear(24, 4),
+)
+```
+
+It prints train loss, validation loss, and validation accuracy so the learning
+curve is visible from the terminal.
+
+## Computation Graph Visualization
+
+```bash
+python examples/visualize_autograd_graph.py
+```
+
+This writes `graph.dot`, a dependency-free Graphviz DOT file. Each node shows:
+
+- tensor shape
+- operation name
+- whether gradients are tracked
+
+You can render it later with Graphviz:
+
+```bash
+dot -Tpng graph.dot -o graph.png
+```
+
+Graphviz is optional; TensorTrail only writes the DOT text file.
+
+## Architecture Overview
+
+- `tensor.py` implements the Tensor object and autograd engine.
+- `ops.py` contains reusable functions such as softmax and accuracy.
+- `modules.py` defines layers, `Sequential`, train/eval mode, parameters, and buffers.
+- `losses.py` implements differentiable objective functions.
+- `optim.py` updates parameters with SGD or Adam.
+- `data.py` provides small offline datasets and mini-batches.
+- `trainer.py` runs training, validation, metrics, early stopping, and checkpoints.
+- `serialization.py` saves and loads NumPy `.npz` model state.
+- `gradcheck.py` compares autograd gradients against finite differences.
+- `graph.py` exports autograd graphs as Graphviz DOT.
+
+For deeper explanations, see:
+
+- `docs/autograd_explained.md`
+- `docs/framework_architecture.md`
 
 ## What I Built From Scratch
 
 - Tensor object
 - Reverse-mode autodiff
 - Computational graph
+- Topological backward pass
+- Broadcasting-aware gradient handling
 - Layer abstraction
 - Loss functions
 - Optimizers
 - Training loop
+- Validation and metrics
 - Gradient checking
+- Model serialization
+- Graph visualization
 - Example models
 
-## Architecture
-
-TensorTrail is organized around a few small building blocks:
-
-- `tensor.py` defines `Tensor`, graph tracking, and operation-level gradient rules.
-- `ops.py` exposes reusable operations such as `softmax`, `log_softmax`, `one_hot`, and `accuracy`.
-- `modules.py` provides neural network layers and composition.
-- `losses.py` defines objective functions.
-- `optim.py` updates trainable parameters in place.
-- `data.py` and `trainer.py` provide enough infrastructure to run complete training experiments.
-- `gradcheck.py` validates analytical gradients against numerical finite differences.
-- `serialization.py` saves and loads model parameters with NumPy `.npz` files.
-
-For a deeper walkthrough of the autograd system, see `docs/autograd_explained.md`.
-
-## How Autograd Works
-
-Each differentiable operation creates a new `Tensor` containing:
-
-- computed NumPy data
-- references to parent tensors
-- a small backward closure describing how output gradients flow to parents
-
-Calling `backward()` topologically sorts the dynamic computation graph, seeds the output gradient, and runs the backward closures in reverse order. Gradients accumulate into each tensor's `.grad`, so reused tensors correctly receive contributions from multiple branches.
-
-Broadcasting is handled by reducing output gradients back to each operand's original shape before accumulation.
-
-## Built From Scratch
-
-TensorTrail does not use PyTorch, TensorFlow, JAX, autograd, tinygrad, micrograd, scikit-learn models, or any existing ML/autograd framework.
-
-The framework builds these pieces directly:
-
-- tensor wrapper
-- computation graph
-- reverse-mode backpropagation
-- neural network layers
-- loss functions
-- optimizers
-- data loading
-- training loop
-- gradient checker
-- save/load helpers
-
-NumPy is used only for numerical arrays and matrix operations.
+TensorTrail does not use PyTorch, TensorFlow, JAX, autograd, tinygrad,
+micrograd, or any existing ML/autograd framework. NumPy is used as the numerical
+array backend.
 
 ## Testing
-
-Run:
 
 ```bash
 pytest
 ```
 
-The test suite covers tensor creation, forward operations, gradients, broadcasting, matrix multiplication, activations, losses, modules, optimizers, XOR training, and finite-difference gradient checking.
+The tests cover tensor operations, autograd, broadcasting, modules, losses,
+optimizers, serialization, gradient checking, graph export, and trainer behavior.
 
 ## Roadmap
 
 - Add convolution and pooling layers
-- Add dropout once the training/eval behavior is worth demonstrating
 - Add gradient clipping
+- Add learning-rate schedules
 - Add richer plotting for training histories
-- Add a small notebook walkthrough
+- Add notebook walkthroughs
+- Add a tiny experiment registry for examples
 
 ## Limitations
 
-TensorTrail is educational infrastructure, not production ML infrastructure. It is not optimized for speed, GPU execution, distributed training, mixed precision, large datasets, or deployment. The code favors clarity and inspectability over performance.
+TensorTrail is educational infrastructure, not production ML infrastructure. It
+does not target GPUs, distributed training, mixed precision, automatic batching,
+large datasets, deployment, or high performance.
 
-That tradeoff is deliberate: TensorTrail is meant to make the trail from tensors to trained networks visible.
+That tradeoff is deliberate. The project favors clarity and inspectability so
+the trail from tensors to trained neural networks stays visible.
+
