@@ -14,6 +14,7 @@ class Module:
 
     def __init__(self) -> None:
         self.training = True
+        self._buffers: list[str] = []
 
     def forward(self, *args, **kwargs):
         """Compute module output. Subclasses must override this method."""
@@ -42,6 +43,21 @@ class Module:
         """Clear gradients on all module parameters."""
         for param in self.parameters():
             param.zero_grad()
+
+    def buffers(self) -> list[np.ndarray]:
+        """Return non-trainable state arrays owned by this module.
+
+        Buffers are values such as BatchNorm running statistics: they are not
+        optimized by gradient descent, but they are part of a model checkpoint.
+        """
+        buffers: list[np.ndarray] = []
+        for name in self._buffers:
+            value = getattr(self, name)
+            if isinstance(value, np.ndarray):
+                buffers.append(value)
+        for child in self.children():
+            buffers.extend(child.buffers())
+        return buffers
 
     def train(self) -> None:
         """Set this module and child modules to training mode."""
@@ -115,6 +131,90 @@ class Tanh(Module):
         return x.tanh()
 
 
+class Flatten(Module):
+    """Flatten each sample in a batch into one feature vector."""
+
+    def forward(self, x: Tensor) -> Tensor:
+        if x.ndim == 0:
+            raise ValueError("Flatten expects at least one dimension.")
+        batch = x.shape[0]
+        return x.reshape(batch, -1)
+
+
+class Dropout(Module):
+    """Inverted dropout regularization.
+
+    During training, elements are randomly zeroed and the remaining activations
+    are scaled by ``1 / (1 - p)``. During evaluation, dropout is an identity.
+    """
+
+    def __init__(self, p: float = 0.5, seed: int | None = None) -> None:
+        super().__init__()
+        if not 0 <= p < 1:
+            raise ValueError("dropout probability p must satisfy 0 <= p < 1.")
+        self.p = float(p)
+        self.rng = np.random.default_rng(seed)
+
+    def forward(self, x: Tensor) -> Tensor:
+        if not self.training or self.p == 0:
+            return x
+        keep_probability = 1.0 - self.p
+        mask = (self.rng.random(x.shape) < keep_probability).astype(float)
+        return x * Tensor(mask / keep_probability)
+
+
+class BatchNorm1D(Module):
+    """Simple batch normalization for 2D ``(batch, features)`` tensors."""
+
+    def __init__(
+        self,
+        num_features: int,
+        momentum: float = 0.1,
+        eps: float = 1e-5,
+    ) -> None:
+        super().__init__()
+        if num_features <= 0:
+            raise ValueError("num_features must be positive.")
+        if not 0 < momentum <= 1:
+            raise ValueError("momentum must satisfy 0 < momentum <= 1.")
+        self.num_features = int(num_features)
+        self.momentum = float(momentum)
+        self.eps = float(eps)
+        self.gamma = Tensor(np.ones(num_features), requires_grad=True)
+        self.beta = Tensor(np.zeros(num_features), requires_grad=True)
+        self.running_mean = np.zeros(num_features)
+        self.running_var = np.ones(num_features)
+        self._buffers.extend(["running_mean", "running_var"])
+
+    def forward(self, x: Tensor) -> Tensor:
+        if x.ndim != 2:
+            raise ValueError("BatchNorm1D expects input with shape (batch, features).")
+        if x.shape[1] != self.num_features:
+            raise ValueError(
+                f"BatchNorm1D expected {self.num_features} features, got {x.shape[1]}."
+            )
+
+        if self.training:
+            mean = x.mean(axis=0, keepdims=True)
+            centered = x - mean
+            var = (centered * centered).mean(axis=0, keepdims=True)
+            self.running_mean = (
+                (1 - self.momentum) * self.running_mean
+                + self.momentum * mean.data.reshape(-1)
+            )
+            self.running_var = (
+                (1 - self.momentum) * self.running_var
+                + self.momentum * var.data.reshape(-1)
+            )
+        else:
+            mean = Tensor(self.running_mean.reshape(1, -1))
+            var = Tensor(self.running_var.reshape(1, -1))
+            centered = x - mean
+
+        normalized = centered / ((var + self.eps) ** 0.5)
+        return normalized * self.gamma + self.beta
+
+
 class Sequential(Module):
     """Compose modules in order."""
 
@@ -129,4 +229,3 @@ class Sequential(Module):
         for layer in self.layers:
             x = layer(x)
         return x
-
