@@ -41,6 +41,12 @@ For development:
 pip install -e ".[dev]"
 ```
 
+If your shell exposes Python as `python3` instead of `python`, use:
+
+```bash
+python3 -m pip install -e .
+```
+
 ## Quickstart
 
 ```python
@@ -161,8 +167,28 @@ array backend.
 pytest
 ```
 
+Equivalent command if `pytest` is not installed as a standalone executable:
+
+```bash
+python3 -m pytest
+```
+
 The tests cover tensor operations, autograd, broadcasting, modules, losses,
 optimizers, serialization, gradient checking, graph export, and trainer behavior.
+
+## Validation Commands
+
+These are the main smoke checks for the project:
+
+```bash
+python examples/train_xor.py
+python examples/train_mnist_like.py
+python examples/train_mlp_classifier.py
+python examples/visualize_autograd_graph.py
+pytest
+```
+
+On systems where only `python3` is available, replace `python` with `python3`.
 
 ## Roadmap
 
@@ -181,4 +207,3 @@ large datasets, deployment, or high performance.
 
 That tradeoff is deliberate. The project favors clarity and inspectability so
 the trail from tensors to trained neural networks stays visible.
-
