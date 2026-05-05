@@ -7,7 +7,7 @@ name = "tensortrail"
 version = "0.1.0"
 description = "TensorTrail: an educational NumPy neural network framework built from scratch."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 authors = [{ name = "TensorTrail" }]
 dependencies = ["numpy"]
 
@@ -20,4 +20,3 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-
