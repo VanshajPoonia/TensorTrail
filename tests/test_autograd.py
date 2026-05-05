@@ -72,6 +72,38 @@ def test_matmul_gradients():
     np.testing.assert_allclose(w.grad, x.data.T @ np.ones((2, 2)))
 
 
+def test_sum_and_mean_gradients_with_axes():
+    x = Tensor(np.arange(6.0).reshape(2, 3), requires_grad=True)
+    x.sum(axis=0).backward(np.array([1.0, 2.0, 3.0]))
+    np.testing.assert_allclose(x.grad, [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+
+    x.zero_grad()
+    x.mean(axis=1, keepdims=True).backward(np.array([[2.0], [4.0]]))
+    np.testing.assert_allclose(
+        x.grad,
+        [[2 / 3, 2 / 3, 2 / 3], [4 / 3, 4 / 3, 4 / 3]],
+    )
+
+
+def test_reshape_and_transpose_gradients():
+    x = Tensor(np.arange(6.0).reshape(2, 3), requires_grad=True)
+
+    x.reshape(3, 2).backward(np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]))
+    np.testing.assert_allclose(x.grad, [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+    x.zero_grad()
+    x.transpose().backward(np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]))
+    np.testing.assert_allclose(x.grad, [[1.0, 3.0, 5.0], [2.0, 4.0, 6.0]])
+
+
+def test_exp_and_log_gradients():
+    x = Tensor([1.0, 2.0, 4.0], requires_grad=True)
+
+    (x.exp() + x.log()).sum().backward()
+
+    np.testing.assert_allclose(x.grad, np.exp(x.data) + 1 / x.data)
+
+
 def test_activation_gradients():
     x = Tensor([-1.0, 0.0, 2.0], requires_grad=True)
     y = (x.relu() + x.sigmoid() + x.tanh()).sum()
