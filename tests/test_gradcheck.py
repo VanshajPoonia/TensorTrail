@@ -15,6 +15,15 @@ def test_gradcheck_passes_for_smooth_expression():
     assert result.failures == []
 
 
+def test_gradcheck_passes_for_scalar_square_sum():
+    x = Tensor(np.array([1.0, -2.0, 3.0]), requires_grad=True)
+
+    result = gradcheck(lambda value: (value * value).sum(), x)
+
+    assert result.passed
+    assert result.max_abs_error < 1e-5
+
+
 def test_gradcheck_reports_failure_for_nonsmooth_point():
     x = Tensor([0.0], requires_grad=True)
 
@@ -30,4 +39,3 @@ def test_gradcheck_can_raise_on_failure():
 
     with pytest.raises(AssertionError):
         gradcheck(lambda value: value.relu().sum(), x, raise_on_fail=True)
-
