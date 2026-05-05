@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from tensortrail import Linear, ReLU, Sequential, Tensor
+from tensortrail import BatchNorm1D, Dropout, Flatten, Linear, ReLU, Sequential, Tensor
 from tensortrail.losses import CrossEntropyLoss, MSELoss
 
 
@@ -24,6 +24,57 @@ def test_sequential_forward_and_parameters():
 
     assert out.shape == (3, 1)
     assert len(model.parameters()) == 4
+
+
+def test_flatten_preserves_batch_dimension():
+    layer = Flatten()
+    x = Tensor(np.ones((4, 2, 3)))
+
+    out = layer(x)
+
+    assert out.shape == (4, 6)
+
+
+def test_dropout_respects_train_and_eval_modes():
+    layer = Dropout(p=0.5, seed=123)
+    x = Tensor(np.ones((200,)))
+
+    train_out = layer(x)
+    layer.eval()
+    eval_out = layer(x)
+
+    assert np.any(train_out.data == 0.0)
+    assert train_out.data.mean() == pytest.approx(1.0, abs=0.25)
+    np.testing.assert_allclose(eval_out.data, x.data)
+
+
+def test_batchnorm1d_normalizes_and_tracks_running_stats():
+    layer = BatchNorm1D(3, momentum=0.5)
+    x = Tensor(
+        np.array(
+            [
+                [1.0, 2.0, 3.0],
+                [2.0, 3.0, 4.0],
+                [3.0, 4.0, 5.0],
+            ]
+        ),
+        requires_grad=True,
+    )
+
+    out = layer(x)
+    out.sum().backward()
+
+    np.testing.assert_allclose(out.data.mean(axis=0), np.zeros(3), atol=1e-7)
+    assert not np.allclose(layer.running_mean, np.zeros(3))
+    assert len(layer.parameters()) == 2
+    assert len(layer.buffers()) == 2
+    assert x.grad.shape == x.shape
+    assert layer.gamma.grad.shape == (3,)
+    assert layer.beta.grad.shape == (3,)
+
+    layer.eval()
+    eval_out = layer(Tensor(np.ones((2, 3))))
+    assert eval_out.shape == (2, 3)
 
 
 def test_loss_functions():
