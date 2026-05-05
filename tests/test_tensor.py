@@ -46,3 +46,11 @@ def test_tensor_rejects_unsupported_dtypes():
 
     with pytest.raises(TypeError, match="complex dtype"):
         Tensor(np.array([1 + 2j]))
+
+
+def test_invalid_matmul_shapes_have_helpful_error():
+    x = Tensor(np.ones((2, 3)))
+    y = Tensor(np.ones((4, 2)))
+
+    with pytest.raises(ValueError, match="matmul shape mismatch"):
+        _ = x @ y

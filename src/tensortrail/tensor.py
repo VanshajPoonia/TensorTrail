@@ -55,6 +55,17 @@ def _matmul_data(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         return left @ right
 
 
+def _checked_matmul_data(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+    """Run matmul and raise a TensorTrail-shaped error for invalid operands."""
+    try:
+        return _matmul_data(left, right)
+    except ValueError as exc:
+        raise ValueError(
+            f"matmul shape mismatch: left shape {left.shape} cannot be multiplied "
+            f"with right shape {right.shape}."
+        ) from exc
+
+
 def _children_if_tracking(requires_grad: bool, *children: "Tensor") -> tuple["Tensor", ...]:
     return tuple(children) if requires_grad else ()
 
@@ -246,7 +257,7 @@ class Tensor:
         other = _as_tensor(other)
         requires_grad = self.requires_grad or other.requires_grad
         out = Tensor(
-            _matmul_data(self.data, other.data),
+            _checked_matmul_data(self.data, other.data),
             requires_grad=requires_grad,
             _children=_children_if_tracking(requires_grad, self, other),
             _op="matmul",
