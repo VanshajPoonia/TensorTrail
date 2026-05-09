@@ -8,11 +8,16 @@ def test_gradcheck_passes_for_smooth_expression():
     x = Tensor(np.array([[0.2, -0.4], [0.7, 1.1]]), requires_grad=True)
     y = Tensor(np.array([[1.0, -0.3], [0.5, 0.8]]), requires_grad=True)
 
-    result = gradcheck(lambda a, b: ((a * b).tanh() + a.exp()).mean(), [x, y])
+    result = gradcheck(lambda a, b: ((a * b).tanh() + a.sigmoid()).mean(), [x, y])
 
     assert result.passed
     assert result.max_abs_error < 1e-5
     assert result.failures == []
+    assert len(result.analytical_gradients) == 2
+    assert len(result.numerical_gradients) == 2
+    assert result.analytical_gradients[0].shape == x.shape
+    assert result.numerical_gradients[1].shape == y.shape
+    assert result.as_dict()["max_error"] == result.max_error
 
 
 def test_gradcheck_passes_for_scalar_square_sum():
@@ -22,6 +27,25 @@ def test_gradcheck_passes_for_scalar_square_sum():
 
     assert result.passed
     assert result.max_abs_error < 1e-5
+
+
+def test_gradcheck_passes_for_matmul_sum():
+    x = Tensor(np.array([[0.2, -0.4], [0.7, 1.1]]), requires_grad=True)
+    w = Tensor(np.array([[1.0, -0.3], [0.5, 0.8]]), requires_grad=True)
+
+    result = gradcheck(lambda a, b: (a @ b).sum(), [x, w])
+
+    assert result.passed
+    assert result.max_error < 1e-5
+
+
+def test_gradcheck_passes_for_mean_sum_expression():
+    x = Tensor(np.array([[1.0, 2.0, 3.0], [-1.0, 0.5, 4.0]]), requires_grad=True)
+
+    result = gradcheck(lambda value: value.mean(axis=1).sum() + value.sum() * 0.25, x)
+
+    assert result.passed
+    assert result.max_error < 1e-5
 
 
 def test_gradcheck_reports_failure_for_nonsmooth_point():
