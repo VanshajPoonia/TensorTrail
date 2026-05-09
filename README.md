@@ -20,7 +20,7 @@ serialization, graph visualization, and tests.
 - Broadcasting-aware gradients
 - Gradient checker with finite differences
 - Graphviz DOT computation graph export
-- Layers: `Linear`, `Flatten`, `Dropout`, `BatchNorm1D`, `ReLU`, `Sigmoid`, `Tanh`
+- Layers: `Linear`, `Conv2D`, pooling, normalization, dropout, activations
 - `Sequential` model composition
 - Losses: MSE, binary cross entropy, multi-class cross entropy
 - Optimizers: SGD, momentum SGD, Adam
@@ -151,6 +151,29 @@ It uses `DataLoader`, `metrics=["accuracy"]`, and `trainer.evaluate()`, then
 prints train loss, validation loss, and test accuracy so the learning curve is
 visible from the terminal.
 
+## Tiny CNN Example
+
+```bash
+python examples/train_tiny_cnn.py
+```
+
+The tiny CNN example generates offline `8x8` grayscale images with simple
+class-specific patterns, then trains:
+
+```python
+model = Sequential(
+    Conv2D(1, 4, kernel_size=3, padding=1),
+    ReLU(),
+    MaxPool2D(2),
+    Flatten(),
+    Linear(4 * 4 * 4, 3),
+)
+```
+
+`Conv2D`, `MaxPool2D`, and `AveragePool2D` are educational, loop-based
+implementations. They are designed for correctness and readability on small
+inputs, not high-performance computer vision workloads.
+
 ## Computation Graph Visualization
 
 ```bash
@@ -176,6 +199,9 @@ Graphviz is optional; TensorTrail only writes the DOT text file.
 | Layer | Class | Notes |
 |---|---|---|
 | Fully connected | `Linear(in, out)` | Xavier uniform init, optional bias |
+| 2D convolution | `Conv2D(in_channels, out_channels, kernel_size)` | NCHW input, stride/padding, educational loop implementation |
+| Max pooling | `MaxPool2D(kernel_size)` | NCHW input, routes gradients to max positions |
+| Average pooling | `AveragePool2D(kernel_size)` | NCHW input, distributes gradients evenly |
 | Flatten | `Flatten()` | `(batch, …) → (batch, features)` |
 | Batch normalisation | `BatchNorm1D(features)` | learnable γ/β, running stats, train/eval modes |
 | Layer normalisation | `LayerNorm(features)` | per-sample normalisation over last dim, learnable γ/β |
@@ -267,6 +293,7 @@ These are the main smoke checks for the project:
 python examples/train_xor.py
 python examples/train_mnist_like.py
 python examples/train_mlp_classifier.py
+python examples/train_tiny_cnn.py
 python examples/visualize_autograd_graph.py
 pytest
 ```
@@ -275,7 +302,6 @@ On systems where only `python3` is available, replace `python` with `python3`.
 
 ## Roadmap
 
-- Add convolution and pooling layers
 - Add gradient clipping
 - Add learning-rate schedules
 - Add richer plotting for training histories
