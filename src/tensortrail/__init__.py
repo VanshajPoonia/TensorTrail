@@ -4,6 +4,7 @@ from .data import DataLoader, Dataset, make_mnist_like, make_xor, train_test_spl
 from .gradcheck import GradCheckResult, gradcheck
 from .graph import visualize_graph
 from .losses import BinaryCrossEntropyLoss, CrossEntropyLoss, MSELoss
+from .metrics import accuracy_score, binary_accuracy
 from .modules import (
     BatchNorm1D,
     Dropout,
