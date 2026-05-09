@@ -89,62 +89,14 @@ model = Sequential(
 )
 ```
 
-## Trainer API
-
-```python
-from tensortrail import (
-    CrossEntropyLoss, DataLoader, Linear, ReLU, Sequential, Trainer,
-)
-from tensortrail.data import train_test_split, make_mnist_like
-from tensortrail.optim import Adam
-
-dataset = make_mnist_like(n_samples=800, n_features=32, n_classes=4, seed=0)
-train_data, val_data = train_test_split(dataset.x, dataset.y, test_size=0.2, seed=0)
-
-train_loader = DataLoader(train_data, batch_size=32, shuffle=True, seed=42)
-val_loader   = DataLoader(val_data,   batch_size=32, shuffle=False)
-
-model = Sequential(Linear(32, 16, seed=1), ReLU(), Linear(16, 4, seed=2))
-
-trainer = Trainer(
-    model=model,
-    loss_fn=CrossEntropyLoss(),
-    optimizer=Adam(model.parameters(), lr=0.01),
-    metrics=["accuracy"],          # built-in string shorthand
-)
-
-history = trainer.fit(
-    train_loader,
-    val_loader=val_loader,
-    epochs=20,
-    log_every=5,                   # print every 5 epochs
-    early_stopping_patience=5,     # stop if val_loss stalls
-    checkpoint_path="best.npz",    # save best weights
-)
-
-# History keys: epoch, train_loss, val_loss, accuracy, val_accuracy, elapsed_time
-print(history["val_accuracy"])
-
-# Evaluate on a held-out set
-results = trainer.evaluate(val_loader)
-print(f"val loss={results['loss']:.4f}  accuracy={results['accuracy']:.4f}")
-```
-
-`trainer.fit()` returns a history dictionary with one list per key and one
-entry per completed epoch.  When a `val_loader` is supplied the dictionary also
-includes `val_loss` and `val_<metric>` keys.
-
-`trainer.evaluate()` runs a single pass in eval mode and returns a plain
-`dict[str, float]` with `"loss"` and each configured metric.
-
 ## MLP Classifier Example
 
 ```bash
 python examples/train_mlp_classifier.py
 ```
 
-The classifier example generates an offline synthetic multi-class dataset and
-trains:
+This example generates an offline synthetic multi-class dataset and trains an
+MLP with BatchNorm and Dropout:
 
 ```python
 model = Sequential(
@@ -156,18 +108,17 @@ model = Sequential(
 )
 ```
 
-It uses `DataLoader`, `metrics=["accuracy"]`, and `trainer.evaluate()`, then
-prints train loss, validation loss, and test accuracy so the learning curve is
-visible from the terminal.
+It uses `DataLoader`, `Trainer(metrics=["accuracy"])`, validation, early
+stopping, and `trainer.evaluate()`.
 
-## Tiny CNN Example
+## CNN Example
 
 ```bash
 python examples/train_tiny_cnn.py
 ```
 
 The tiny CNN example generates offline `8x8` grayscale images with simple
-class-specific patterns, then trains:
+class-specific patterns:
 
 ```python
 model = Sequential(
