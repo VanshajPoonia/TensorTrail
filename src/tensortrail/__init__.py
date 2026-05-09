@@ -6,11 +6,14 @@ from .graph import visualize_graph
 from .losses import BinaryCrossEntropyLoss, CrossEntropyLoss, MSELoss
 from .metrics import accuracy_score, binary_accuracy
 from .modules import (
+    AveragePool2D,
     BatchNorm1D,
+    Conv2D,
     Dropout,
     Flatten,
     LayerNorm,
     Linear,
+    MaxPool2D,
     Module,
     ReLU,
     Sequential,
@@ -24,8 +27,10 @@ from .trainer import Trainer
 
 __all__ = [
     "Adam",
+    "AveragePool2D",
     "BatchNorm1D",
     "BinaryCrossEntropyLoss",
+    "Conv2D",
     "CrossEntropyLoss",
     "DataLoader",
     "Dataset",
@@ -33,6 +38,7 @@ __all__ = [
     "Flatten",
     "GradCheckResult",
     "Linear",
+    "MaxPool2D",
     "MSELoss",
     "Module",
     "ReLU",
