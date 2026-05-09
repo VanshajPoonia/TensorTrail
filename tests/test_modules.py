@@ -1,7 +1,16 @@
 import numpy as np
 import pytest
 
-from tensortrail import BatchNorm1D, Dropout, Flatten, Linear, ReLU, Sequential, Tensor
+from tensortrail import (
+    BatchNorm1D,
+    Dropout,
+    Flatten,
+    LayerNorm,
+    Linear,
+    ReLU,
+    Sequential,
+    Tensor,
+)
 from tensortrail.losses import CrossEntropyLoss, MSELoss
 
 
@@ -90,3 +99,78 @@ def test_loss_functions():
 
     assert ce_loss.item() < 0.2
     assert logits.grad.shape == logits.shape
+
+
+# ------------------------------------------------------------------ #
+# LayerNorm                                                            #
+# ------------------------------------------------------------------ #
+
+def test_layernorm_output_shape():
+    layer = LayerNorm(8)
+    x = Tensor(np.random.randn(4, 8))
+    out = layer(x)
+    assert out.shape == (4, 8)
+
+
+def test_layernorm_has_parameters():
+    layer = LayerNorm(6)
+    params = layer.parameters()
+    assert len(params) == 2          # gamma and beta
+    shapes = {p.shape for p in params}
+    assert (6,) in shapes
+
+
+def test_layernorm_normalizes_each_sample():
+    # Each row should have mean ≈ 0 and std ≈ 1 (gamma=1, beta=0 by default).
+    layer = LayerNorm(5)
+    x = Tensor(np.array([[1.0, 2.0, 3.0, 4.0, 5.0],
+                          [10.0, 20.0, 30.0, 40.0, 50.0]]))
+    out = layer(x)
+    row_means = out.data.mean(axis=-1)
+    row_stds = out.data.std(axis=-1)
+    np.testing.assert_allclose(row_means, [0.0, 0.0], atol=1e-6)
+    np.testing.assert_allclose(row_stds, [1.0, 1.0], atol=1e-5)
+
+
+def test_layernorm_backward_propagates_gradients():
+    layer = LayerNorm(4)
+    x = Tensor(np.random.randn(3, 4), requires_grad=True)
+    out = layer(x)
+    out.sum().backward()
+    assert x.grad is not None
+    assert x.grad.shape == x.shape
+    assert layer.gamma.grad is not None
+    assert layer.beta.grad is not None
+    assert layer.gamma.grad.shape == (4,)
+    assert layer.beta.grad.shape == (4,)
+
+
+def test_layernorm_gamma_beta_applied():
+    # Setting gamma=2, beta=3 should shift and scale the normalised output.
+    layer = LayerNorm(3)
+    layer.gamma.data[:] = 2.0
+    layer.beta.data[:] = 3.0
+    x = Tensor(np.array([[1.0, 2.0, 3.0]]))
+    out = layer(x)
+    # Normalised values scaled by 2 and shifted by 3; mean should be 3, not 0.
+    assert abs(out.data.mean() - 3.0) < 1e-5
+
+
+def test_layernorm_rejects_wrong_last_dim():
+    layer = LayerNorm(4)
+    with pytest.raises(ValueError, match="last dim"):
+        layer(Tensor(np.ones((3, 5))))
+
+
+def test_layernorm_in_sequential():
+    model = Sequential(
+        Linear(8, 8, seed=1),
+        LayerNorm(8),
+        ReLU(),
+        Linear(8, 3, seed=2),
+    )
+    x = Tensor(np.random.randn(5, 8))
+    out = model(x)
+    assert out.shape == (5, 3)
+    # gamma and beta from LayerNorm + weights/biases from two Linear layers
+    assert len(model.parameters()) == 6
