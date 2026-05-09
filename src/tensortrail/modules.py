@@ -215,6 +215,50 @@ class BatchNorm1D(Module):
         return normalized * self.gamma + self.beta
 
 
+class LayerNorm(Module):
+    """Layer normalization over the last dimension.
+
+    Unlike :class:`BatchNorm1D`, which normalizes across the batch for each
+    feature, LayerNorm normalizes each *sample* across its own feature
+    dimension.  This makes it independent of batch size and well-suited to
+    small batches or sequence models.
+
+    For a 2-D input of shape ``(batch, features)`` the normalization is
+    applied independently per row::
+
+        mean  = x.mean(axis=-1, keepdims=True)
+        var   = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+        x_hat = (x - mean) / sqrt(var + eps)
+        out   = gamma * x_hat + beta
+
+    ``gamma`` and ``beta`` are learnable per-feature scale and shift parameters
+    that appear in :meth:`Module.parameters`.
+
+    Reference: Ba et al., "Layer Normalization" (2016).
+    """
+
+    def __init__(self, normalized_shape: int, eps: float = 1e-5) -> None:
+        super().__init__()
+        if normalized_shape <= 0:
+            raise ValueError("normalized_shape must be a positive integer.")
+        self.normalized_shape = int(normalized_shape)
+        self.eps = float(eps)
+        self.gamma = Tensor(np.ones(normalized_shape), requires_grad=True)
+        self.beta = Tensor(np.zeros(normalized_shape), requires_grad=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        if x.shape[-1] != self.normalized_shape:
+            raise ValueError(
+                f"LayerNorm expected last dim {self.normalized_shape}, "
+                f"got {x.shape[-1]}."
+            )
+        mean = x.mean(axis=-1, keepdims=True)
+        centered = x - mean
+        var = (centered * centered).mean(axis=-1, keepdims=True)
+        normalized = centered / ((var + self.eps) ** 0.5)
+        return normalized * self.gamma + self.beta
+
+
 class Sequential(Module):
     """Compose modules in order."""
 
