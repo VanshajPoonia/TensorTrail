@@ -221,23 +221,32 @@ Equivalent command if `pytest` is not installed as a standalone executable:
 python3 -m pytest
 ```
 
-The tests cover tensor operations, autograd, broadcasting, modules, losses,
-optimizers, serialization, gradient checking, graph export, and trainer behavior.
+The tests cover tensor operations, autograd, broadcasting, modules, CNN layers,
+losses, optimizers, serialization, gradient checking, graph export, data
+utilities, metrics, and trainer behavior.
 
-## Validation Commands
+## Useful Commands
 
-These are the main smoke checks for the project:
+```bash
+make install
+make test
+make xor
+make examples
+```
+
+Main smoke checks:
 
 ```bash
 python examples/train_xor.py
 python examples/train_mnist_like.py
 python examples/train_mlp_classifier.py
+python examples/train_regularized_mlp.py
 python examples/train_tiny_cnn.py
 python examples/visualize_autograd_graph.py
 pytest
 ```
 
-On systems where only `python3` is available, replace `python` with `python3`.
+See [examples/README.md](examples/README.md) for a guide to each script.
 
 ## Roadmap
 
@@ -245,13 +254,22 @@ On systems where only `python3` is available, replace `python` with `python3`.
 - Add learning-rate schedules
 - Add richer plotting for training histories
 - Add notebook walkthroughs
+- Add an im2col Conv2D implementation for faster educational comparison
 - Add a tiny experiment registry for examples
 
 ## Limitations
 
 TensorTrail is educational infrastructure, not production ML infrastructure. It
-does not target GPUs, distributed training, mixed precision, automatic batching,
-large datasets, deployment, or high performance.
+does not target GPUs, distributed training, mixed precision, automatic
+batching, large datasets, deployment, or high performance.
 
-That tradeoff is deliberate. The project favors clarity and inspectability so
-the trail from tensors to trained neural networks stays visible.
+The Conv2D and pooling layers use explicit Python/NumPy loops for clarity. That
+makes them easy to read and test, but much slower than optimized kernels in
+production frameworks.
+
+## Resume Bullet Ideas
+
+- Built TensorTrail, a from-scratch NumPy neural network framework with reverse-mode autodiff, dynamic computation graphs, and broadcasting-aware gradients.
+- Implemented neural network layers, losses, optimizers, a DataLoader, Trainer API, gradient checker, model serialization, and Graphviz computation graph export.
+- Added educational CNN support with manual Conv2D and pooling backward passes, plus finite-difference tests and runnable offline examples.
+- Wrote a pytest suite covering autograd correctness, optimizer behavior, serialization, graph export, trainer workflows, and CNN layer gradients.
