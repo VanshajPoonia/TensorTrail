@@ -1,28 +1,37 @@
 # TensorTrail
 
-TensorTrail: forging tensors, gradients, and neural networks from scratch.
+**A from-scratch neural network framework forged with NumPy.**
 
-TensorTrail is a compact deep learning framework built from scratch with Python
-and NumPy. It is intentionally educational: the code is small enough to read,
-but complete enough to train neural networks, inspect autograd graphs, checkpoint
-models, and test gradients.
+TensorTrail is a compact educational deep learning framework built directly on
+NumPy. It includes a small reverse-mode autograd engine, neural network layers,
+losses, optimizers, data utilities, a trainer API, model serialization,
+gradient checking, graph export, and runnable examples.
 
-The goal is not to beat PyTorch or TensorFlow. The goal is to show that the core
-pieces of a modern neural network framework can be built directly: tensors,
-reverse-mode autodiff, layers, losses, optimizers, training loops, model
-serialization, graph visualization, and tests.
+It is not trying to replace PyTorch or TensorFlow. The point is to make the
+core machinery of a neural network framework visible, readable, and testable.
+
+## Why I Built This
+
+I built TensorTrail to understand deep learning infrastructure from the inside:
+how tensors remember computation history, how gradients flow backward through a
+dynamic graph, how layers expose parameters, and how training loops connect
+data, models, losses, optimizers, metrics, and checkpoints.
+
+The project is intentionally small enough to inspect, but complete enough to
+train MLPs and tiny CNNs on offline synthetic datasets.
 
 ## Feature Checklist
 
 - NumPy-backed `Tensor` object
 - Reverse-mode automatic differentiation
 - Dynamic computation graph with operation names
+- Topological backward pass
 - Broadcasting-aware gradients
-- Gradient checker with finite differences
+- Gradient checker with centered finite differences
 - Graphviz DOT computation graph export
 - Layers: `Linear`, `Conv2D`, pooling, normalization, dropout, activations
 - `Sequential` model composition
-- Losses: MSE, binary cross entropy, multi-class cross entropy
+- Losses: mean squared error, binary cross entropy, multi-class cross entropy
 - Optimizers: SGD, momentum SGD, Adam
 - Offline datasets and mini-batch `DataLoader`
 - Trainer with validation, metrics, early stopping, and checkpoint saving
@@ -35,13 +44,13 @@ serialization, graph visualization, and tests.
 pip install -e .
 ```
 
-For development:
+For development tools:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-If your shell exposes Python as `python3` instead of `python`, use:
+If your shell exposes Python as `python3`, use:
 
 ```bash
 python3 -m pip install -e .
