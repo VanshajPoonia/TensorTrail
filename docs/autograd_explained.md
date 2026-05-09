@@ -1,78 +1,89 @@
 # Autograd Explained
 
-TensorTrail uses reverse-mode automatic differentiation. That is the same
-high-level idea behind large deep learning frameworks, but this version is small
-enough to read in one sitting.
+TensorTrail uses reverse-mode automatic differentiation. The design is small on
+purpose: every operation builds a little graph node, and every graph node knows
+how to send gradients back to its parents.
 
-## Tensor Object
+## Tensor
 
-`Tensor` wraps a NumPy array and adds three pieces of autograd state:
+`Tensor` wraps a NumPy array and adds autograd state:
 
-- `requires_grad`, which says whether operations should be tracked.
-- `grad`, which stores accumulated gradients after `backward()`.
-- `_prev`, `_op`, and `_backward`, which describe how this tensor was created.
+- `data`: the numeric NumPy array.
+- `requires_grad`: whether this tensor should receive gradients.
+- `grad`: accumulated gradient after `backward()`.
+- `_prev`: parent tensors used to create this tensor.
+- `_op`: a short operation name such as `add`, `matmul`, `relu`, or `conv2d`.
+- `_backward`: a closure that applies the local derivative rule.
 
 Leaf tensors usually come from user data or model parameters. Intermediate
-tensors come from operations such as addition, matrix multiplication, reductions,
-and activations.
+tensors are created by operations such as addition, matrix multiplication,
+reductions, activations, convolution, and pooling.
 
 ## Computational Graph
 
-Every differentiable operation creates a new output `Tensor`. If any input
-requires gradients, the output stores references to its parent tensors. For
-example:
+TensorTrail builds a dynamic graph while Python code runs. For example:
 
 ```python
 y = ((x * x).tanh()).sum()
 ```
 
-creates a graph with multiply, tanh, and sum nodes. The final scalar `y` points
-back through that graph to `x`.
+This creates graph nodes for multiplication, tanh, and sum. The final scalar
+`y` points backward to its parents, and those parents point back until the graph
+reaches the leaf tensor `x`.
 
-## Topological Sort
-
-Backpropagation has to run in dependency order. TensorTrail first walks backward
-from the final tensor with depth-first search and records a topological ordering:
-parents before children.
-
-Then it reverses that list. This means each node's gradient has already been
-collected by the time its local backward function runs.
+Dynamic graph construction keeps the implementation easy to inspect: normal
+Python control flow creates normal TensorTrail graphs.
 
 ## Chain Rule
 
-The chain rule combines local derivatives into full derivatives. If:
+The chain rule is the engine behind backpropagation. If:
 
 ```python
-z = x * y
+z = x * w
 loss = z.sum()
 ```
 
-then the multiply operation knows:
+then the multiply operation knows the local derivatives:
 
-- `dz/dx = y`
-- `dz/dy = x`
+```text
+dz/dx = w
+dz/dw = x
+```
 
-During backpropagation it receives `dLoss/dz` and contributes:
+During backpropagation, the multiply node receives `dLoss/dz` from later in the
+graph and contributes:
 
-- `dLoss/dx = dLoss/dz * y`
-- `dLoss/dy = dLoss/dz * x`
+```text
+dLoss/dx = dLoss/dz * w
+dLoss/dw = dLoss/dz * x
+```
 
-TensorTrail implements one small local derivative rule per operation.
+TensorTrail implements one local derivative rule per operation.
 
 ## Backward Closures
 
-Each operation attaches a `_backward` closure to its output tensor. The closure
-captures the input tensors and any values needed to compute derivatives.
+Each differentiable operation attaches a `_backward` closure to its output
+tensor. The closure captures the parent tensors and any forward-pass values
+needed for gradients.
 
-For `tanh`, the forward pass computes `tanh(x)`. The backward closure reuses
-that value:
+For example, `tanh` stores the forward result:
 
 ```text
 d/dx tanh(x) = 1 - tanh(x)^2
 ```
 
-The graph traversal code stays generic; each operation owns its own gradient
-recipe.
+The graph traversal code does not need to know the derivative of every
+operation. It only calls each node's `_backward` closure in the correct order.
+
+## Topological Sorting
+
+Backpropagation must run after all downstream gradient contributions have been
+collected. TensorTrail handles this with a depth-first traversal from the final
+tensor.
+
+The traversal records parents before children, producing a topological order.
+`backward()` then walks that list in reverse so every node sees the gradient of
+the final output with respect to itself before it pushes gradients to parents.
 
 ## Gradient Accumulation
 
@@ -82,10 +93,12 @@ A tensor can feed multiple graph branches:
 y = x * x + x
 ```
 
-The same `x` contributes through both the multiply branch and the addition
-branch. TensorTrail adds each contribution into `x.grad`. This is why model
-parameters can be reused across many examples in a batch and still receive the
-correct total gradient.
+The same `x` contributes through both the multiplication branch and the addition
+branch. TensorTrail uses `_add_grad()` to accumulate each contribution into
+`x.grad` instead of overwriting previous contributions.
+
+This is essential for shared parameters, reused activations, and any graph where
+one tensor influences the output through multiple paths.
 
 ## Broadcasting Gradients
 
@@ -101,20 +114,23 @@ The bias `b` is used once per row. In the backward pass, its gradient must be
 summed back down to shape `(3,)`. TensorTrail's unbroadcast helper removes extra
 leading dimensions and sums axes where the original input had size `1`.
 
-Without this step, gradients for biases and BatchNorm parameters would have the
-wrong shape.
+Without this step, bias gradients and normalization parameter gradients would
+have the wrong shape.
 
-## Why Gradient Checking Matters
+## Non-Scalar Backward
 
-Autograd code can look correct while hiding small shape or sign bugs. Gradient
-checking compares TensorTrail's analytical gradients with numerical finite
-differences:
+Calling `backward()` without an argument is only valid for scalar outputs.
+Non-scalar tensors require an external gradient with the same shape:
 
-```text
-df/dx ~= (f(x + eps) - f(x - eps)) / (2 * eps)
+```python
+y.backward(np.ones_like(y.data))
 ```
 
-It is too slow for training, but excellent for testing new operations. If a
-smooth scalar-valued function passes gradient checking, the local backward rules
-used by that function are much more trustworthy.
+This mirrors the mathematical idea that backpropagation starts from a seed
+gradient.
 
+## Why This Design Is Educational
+
+TensorTrail keeps autograd close to the operations themselves. The tradeoff is
+that it is not optimized for speed, but the benefit is clarity: each derivative
+rule can be read, tested, and compared against finite differences.
