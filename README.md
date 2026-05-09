@@ -130,105 +130,84 @@ model = Sequential(
 )
 ```
 
-`Conv2D`, `MaxPool2D`, and `AveragePool2D` are educational, loop-based
-implementations. They are designed for correctness and readability on small
-inputs, not high-performance computer vision workloads.
+`Conv2D`, `MaxPool2D`, and `AveragePool2D` are educational loop-based
+implementations. They are correct and readable for small CPU examples, but not
+optimized for production computer vision workloads.
 
-## Computation Graph Visualization
+## Autograd Explanation
 
-```bash
-python examples/visualize_autograd_graph.py
-```
+TensorTrail records a dynamic computation graph as tensor operations run. Each
+operation creates an output `Tensor` with references to its parents, an
+operation name, and a small backward closure that knows the local derivative.
 
-This writes `graph.dot`, a dependency-free Graphviz DOT file. Each node shows:
+Calling `backward()` on a scalar output:
 
-- tensor shape
-- operation name
-- whether gradients are tracked
+1. Builds a topological ordering from the output back to all parents.
+2. Seeds the output gradient with `1`.
+3. Walks the graph in reverse topological order.
+4. Calls each node's backward closure.
+5. Accumulates gradient contributions into every tensor that requires them.
 
-You can render it later with Graphviz:
+Broadcasting is handled by reducing gradients back to each operand's original
+shape, which is essential for bias terms and normalization parameters.
 
-```bash
-dot -Tpng graph.dot -o graph.png
-```
+For a deeper walkthrough, see [docs/autograd_explained.md](docs/autograd_explained.md).
 
-Graphviz is optional; TensorTrail only writes the DOT text file.
+## Architecture Overview
+
+- `tensor.py` implements the `Tensor` object and autograd engine.
+- `ops.py` contains softmax, log-softmax, one-hot encoding, and accuracy.
+- `modules.py` defines layers, `Sequential`, train/eval mode, parameters, and buffers.
+- `losses.py` implements differentiable objective functions.
+- `optim.py` updates trainable tensors with SGD or Adam.
+- `data.py` provides offline datasets, splitting, and mini-batches.
+- `trainer.py` runs training, validation, metrics, early stopping, and checkpoints.
+- `gradcheck.py` compares analytical gradients with finite differences.
+- `serialization.py` saves and loads NumPy `.npz` model state.
+- `graph.py` exports computation graphs as Graphviz DOT.
+
+More detail:
+
+- [docs/framework_architecture.md](docs/framework_architecture.md)
+- [docs/building_blocks.md](docs/building_blocks.md)
+- [docs/gradient_checking.md](docs/gradient_checking.md)
 
 ## Supported Layers
 
 | Layer | Class | Notes |
 |---|---|---|
 | Fully connected | `Linear(in, out)` | Xavier uniform init, optional bias |
-| 2D convolution | `Conv2D(in_channels, out_channels, kernel_size)` | NCHW input, stride/padding, educational loop implementation |
-| Max pooling | `MaxPool2D(kernel_size)` | NCHW input, routes gradients to max positions |
-| Average pooling | `AveragePool2D(kernel_size)` | NCHW input, distributes gradients evenly |
-| Flatten | `Flatten()` | `(batch, …) → (batch, features)` |
-| Batch normalisation | `BatchNorm1D(features)` | learnable γ/β, running stats, train/eval modes |
-| Layer normalisation | `LayerNorm(features)` | per-sample normalisation over last dim, learnable γ/β |
-| Dropout | `Dropout(p)` | inverted dropout, inactive in eval mode |
-| ReLU | `ReLU()` | |
-| Sigmoid | `Sigmoid()` | |
-| Tanh | `Tanh()` | |
-| Container | `Sequential(*layers)` | chains modules in order |
-
-All layers inherit from `Module` and support:
-- `parameters()` — returns learnable `Tensor` objects
-- `buffers()` — returns non-trainable state (e.g. BatchNorm running stats)
-- `train()` / `eval()` — switch training mode recursively
-
-## Architecture Overview
-
-- `tensor.py` implements the Tensor object and autograd engine.
-- `ops.py` contains reusable functions such as softmax and accuracy.
-- `modules.py` defines layers, `Sequential`, train/eval mode, parameters, and buffers.
-- `losses.py` implements differentiable objective functions.
-- `optim.py` updates parameters with SGD or Adam.
-- `data.py` provides small offline datasets and mini-batches.
-- `trainer.py` runs training, validation, metrics, early stopping, and checkpoints.
-- `serialization.py` saves and loads NumPy `.npz` model state.
-- `gradcheck.py` compares autograd gradients against finite differences.
-- `graph.py` exports autograd graphs as Graphviz DOT.
-
-For deeper explanations, see:
-
-- `docs/autograd_explained.md`
-- `docs/framework_architecture.md`
-
-## Core Stability
-
-TensorTrail's core tests focus on the pieces that make an autodiff framework
-trustworthy:
-
-- scalar and non-scalar `backward()` behavior
-- gradient accumulation when a tensor feeds multiple graph branches
-- broadcasting-aware gradients for bias-like tensors
-- arithmetic, division, power, matrix multiplication, reductions, reshape, and transpose gradients
-- activation gradients for ReLU, sigmoid, and tanh
-- helpful errors for unsupported dtypes, missing external gradients, and invalid matmul shapes
-
-This keeps new layers and examples grounded in a small autograd engine whose
-behavior is directly tested.
+| 2D convolution | `Conv2D(in_channels, out_channels, kernel_size)` | NCHW input, stride, padding |
+| Max pooling | `MaxPool2D(kernel_size)` | Routes gradients to max positions |
+| Average pooling | `AveragePool2D(kernel_size)` | Distributes gradients evenly |
+| Flatten | `Flatten()` | `(batch, ...) -> (batch, features)` |
+| Batch normalization | `BatchNorm1D(features)` | Learnable scale/shift, running stats |
+| Layer normalization | `LayerNorm(features)` | Per-sample normalization over last dimension |
+| Dropout | `Dropout(p)` | Inverted dropout, inactive in eval mode |
+| Activations | `ReLU`, `Sigmoid`, `Tanh` | Differentiable activation modules |
+| Container | `Sequential(*layers)` | Chains modules in order |
 
 ## What I Built From Scratch
 
 - Tensor object
-- Reverse-mode autodiff
-- Computational graph
+- Reverse-mode automatic differentiation
+- Computational graph construction
 - Topological backward pass
-- Broadcasting-aware gradient handling
-- Layer abstraction
+- Broadcasting-aware gradients
+- Neural network `Module` system
+- Layers
 - Loss functions
 - Optimizers
-- Training loop
-- Validation and metrics
-- Gradient checking
+- DataLoader
+- Trainer API
+- Gradient checker
 - Model serialization
-- Graph visualization
-- Example models
+- Computation graph exporter
+- Example training scripts
 
 TensorTrail does not use PyTorch, TensorFlow, JAX, autograd, tinygrad,
-micrograd, or any existing ML/autograd framework. NumPy is used as the numerical
-array backend.
+micrograd, scikit-learn models, or any existing ML/autograd framework. NumPy is
+the numerical backend.
 
 ## Testing
 
