@@ -90,7 +90,7 @@ class Tensor:
         self.data = _ensure_array(data)
         self.requires_grad = bool(requires_grad)
         self.grad: np.ndarray | None = None
-        self._prev = set(_children)
+        self._prev = tuple(_children)
         self._op = _op
         self._backward: Callable[[], None] = lambda: None
 
@@ -315,7 +315,26 @@ class Tensor:
         else:
             axes = (axis,) if isinstance(axis, int) else axis
             divisor = int(np.prod([self.shape[a] for a in axes]))
-        return self.sum(axis=axis, keepdims=keepdims) / divisor
+        out = Tensor(
+            self.data.mean(axis=axis, keepdims=keepdims),
+            requires_grad=self.requires_grad,
+            _children=_children_if_tracking(self.requires_grad, self),
+            _op="mean",
+        )
+
+        def _backward() -> None:
+            if out.grad is None:
+                return
+            grad = out.grad / divisor
+            if axis is not None and not keepdims:
+                axes = (axis,) if isinstance(axis, int) else axis
+                axes = tuple(a if a >= 0 else a + self.ndim for a in axes)
+                for ax in sorted(axes):
+                    grad = np.expand_dims(grad, ax)
+            self._add_grad(np.broadcast_to(grad, self.shape))
+
+        out._backward = _backward
+        return out
 
     def reshape(self, *shape: int | tuple[int, ...]) -> "Tensor":
         """Return a tensor with the same data and a new shape."""

@@ -36,6 +36,7 @@ def visualize_graph(tensor: Tensor, path: str | PathLike[str] = "graph.dot") -> 
         nodes.append(node)
 
     visit(tensor)
+    node_ids = {node: f"n{index}" for index, node in enumerate(nodes)}
 
     lines = [
         "digraph TensorTrail {",
@@ -49,14 +50,18 @@ def visualize_graph(tensor: Tensor, path: str | PathLike[str] = "graph.dot") -> 
             f"op: {op}|"
             f"requires_grad: {node.requires_grad}"
         )
-        lines.append(f'  n{id(node)} [label="{_dot_escape(label)}"];')
+        lines.append(f'  {node_ids[node]} [label="{_dot_escape(label)}"];')
 
+    edges: set[tuple[str, str]] = set()
     for node in nodes:
         for parent in node._prev:
-            lines.append(f"  n{id(parent)} -> n{id(node)};")
+            edge = (node_ids[parent], node_ids[node])
+            if edge in edges:
+                continue
+            edges.add(edge)
+            lines.append(f"  {edge[0]} -> {edge[1]};")
 
     lines.append("}")
 
     with open(path, "w", encoding="utf-8") as file:
         file.write("\n".join(lines) + "\n")
-
