@@ -10,10 +10,18 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from tensortrail import CrossEntropyLoss, Linear, ReLU, Sequential, Tensor
-from tensortrail.data import make_mnist_like, train_test_split
-from tensortrail.optim import Adam
-from tensortrail.trainer import Trainer, classification_accuracy
+from tensortrail import (
+    Adam,
+    CrossEntropyLoss,
+    Linear,
+    ReLU,
+    Sequential,
+    Tensor,
+    Trainer,
+    classification_accuracy,
+    make_mnist_like,
+    train_test_split,
+)
 
 
 def main() -> None:

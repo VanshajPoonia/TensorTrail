@@ -20,6 +20,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from tensortrail import (
+    Adam,
     BatchNorm1D,
     CrossEntropyLoss,
     DataLoader,
@@ -27,10 +28,10 @@ from tensortrail import (
     Linear,
     ReLU,
     Sequential,
+    Trainer,
+    make_mnist_like,
+    train_test_split,
 )
-from tensortrail.data import make_mnist_like, train_test_split
-from tensortrail.optim import Adam
-from tensortrail.trainer import Trainer
 
 
 def main() -> None:
