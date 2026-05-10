@@ -267,9 +267,10 @@ The Conv2D and pooling layers use explicit Python/NumPy loops for clarity. That
 makes them easy to read and test, but much slower than optimized kernels in
 production frameworks.
 
-## Resume Bullet Ideas
+## Resume Bullets
 
-- Built TensorTrail, a from-scratch NumPy neural network framework with reverse-mode autodiff, dynamic computation graphs, and broadcasting-aware gradients.
-- Implemented neural network layers, losses, optimizers, a DataLoader, Trainer API, gradient checker, model serialization, and Graphviz computation graph export.
-- Added educational CNN support with manual Conv2D and pooling backward passes, plus finite-difference tests and runnable offline examples.
-- Wrote a pytest suite covering autograd correctness, optimizer behavior, serialization, graph export, trainer workflows, and CNN layer gradients.
+- Built TensorTrail, a from-scratch neural network framework in Python and NumPy with reverse-mode automatic differentiation, dynamic computation graphs, and broadcasting-aware gradient accumulation.
+- Implemented a topological backward pass, finite-difference gradient checker, and broadcasting-correct gradient reduction to validate autograd correctness across all operations.
+- Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
+- Added NumPy `.npz` model serialization, Graphviz computation graph export, and a `Trainer` with validation, early stopping, and checkpoint saving.
+- Validated the framework end-to-end with 88 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
