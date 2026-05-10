@@ -7,21 +7,6 @@ import numpy as np
 from .tensor import Tensor
 
 
-def relu(x: Tensor) -> Tensor:
-    """Apply ReLU activation."""
-    return x.relu()
-
-
-def sigmoid(x: Tensor) -> Tensor:
-    """Apply sigmoid activation."""
-    return x.sigmoid()
-
-
-def tanh(x: Tensor) -> Tensor:
-    """Apply tanh activation."""
-    return x.tanh()
-
-
 def softmax(x: Tensor, axis: int = -1) -> Tensor:
     """Numerically stable softmax."""
     max_values = np.max(x.data, axis=axis, keepdims=True)
