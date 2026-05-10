@@ -23,7 +23,7 @@ from .modules import (
 from .optim import Adam, SGD
 from .serialization import load_model, save_model
 from .tensor import Tensor, tensor
-from .trainer import Trainer
+from .trainer import Trainer, classification_accuracy
 
 __all__ = [
     "Adam",
@@ -37,6 +37,7 @@ __all__ = [
     "Dropout",
     "Flatten",
     "GradCheckResult",
+    "LayerNorm",
     "Linear",
     "MaxPool2D",
     "MSELoss",
@@ -48,9 +49,9 @@ __all__ = [
     "Tanh",
     "Tensor",
     "Trainer",
-    "LayerNorm",
     "accuracy_score",
     "binary_accuracy",
+    "classification_accuracy",
     "gradcheck",
     "load_model",
     "make_mnist_like",

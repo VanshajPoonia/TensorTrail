@@ -1,9 +1,18 @@
 import pytest
 
-from tensortrail import CrossEntropyLoss, DataLoader, Linear, ReLU, Sequential
-from tensortrail.data import Dataset, make_mnist_like
-from tensortrail.optim import Adam, SGD
-from tensortrail.trainer import Trainer, classification_accuracy
+from tensortrail import (
+    Adam,
+    CrossEntropyLoss,
+    DataLoader,
+    Dataset,
+    Linear,
+    ReLU,
+    SGD,
+    Sequential,
+    Trainer,
+    classification_accuracy,
+    make_mnist_like,
+)
 
 
 # ------------------------------------------------------------------ #
