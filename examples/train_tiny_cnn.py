@@ -13,18 +13,19 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from tensortrail import (  # noqa: E402
+    Adam,
     Conv2D,
     CrossEntropyLoss,
     DataLoader,
+    Dataset,
     Flatten,
     Linear,
     MaxPool2D,
     ReLU,
     Sequential,
+    Trainer,
+    train_test_split,
 )
-from tensortrail.data import Dataset, train_test_split  # noqa: E402
-from tensortrail.optim import Adam  # noqa: E402
-from tensortrail.trainer import Trainer  # noqa: E402
 
 
 def make_tiny_image_dataset(

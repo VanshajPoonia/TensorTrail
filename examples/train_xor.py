@@ -12,9 +12,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from tensortrail import BinaryCrossEntropyLoss, Linear, Sequential, Sigmoid, Tanh, Tensor
-from tensortrail.data import make_xor
-from tensortrail.optim import Adam
+from tensortrail import Adam, BinaryCrossEntropyLoss, Linear, Sequential, Sigmoid, Tanh, Tensor, make_xor
 
 
 def main() -> None:
