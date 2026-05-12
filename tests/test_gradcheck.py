@@ -63,3 +63,17 @@ def test_gradcheck_can_raise_on_failure():
 
     with pytest.raises(AssertionError):
         gradcheck(lambda value: value.relu().sum(), x, raise_on_fail=True)
+
+
+def test_gradcheck_rejects_non_scalar_tensor_output():
+    x = Tensor([1.0, -2.0, 3.0], requires_grad=True)
+
+    with pytest.raises(ValueError, match="scalar Tensor"):
+        gradcheck(lambda value: value * value, x)
+
+
+def test_gradcheck_rejects_non_tensor_output():
+    x = Tensor([1.0, -2.0, 3.0], requires_grad=True)
+
+    with pytest.raises(TypeError, match="return a Tensor"):
+        gradcheck(lambda value: 1.0, x)
