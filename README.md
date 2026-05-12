@@ -172,6 +172,7 @@ More detail:
 - [docs/framework_architecture.md](docs/framework_architecture.md)
 - [docs/building_blocks.md](docs/building_blocks.md)
 - [docs/gradient_checking.md](docs/gradient_checking.md)
+- [docs/testing.md](docs/testing.md)
 
 ## Supported Layers
 
@@ -252,12 +253,13 @@ See [examples/README.md](examples/README.md) for a guide to each script.
 
 ## Roadmap
 
-- Add gradient clipping
+- Add richer named checkpoint metadata on top of `.npz` files
+- Add stricter validation and clearer error messages around user inputs
+- Add optional Matplotlib plots for example training histories
 - Add learning-rate schedules
-- Add richer plotting for training histories
+- Add gradient clipping
 - Add notebook walkthroughs
 - Add an im2col Conv2D implementation for faster educational comparison
-- Add a tiny experiment registry for examples
 
 ## Limitations
 
@@ -275,4 +277,4 @@ production frameworks.
 - Implemented a topological backward pass, finite-difference gradient checker, and broadcasting-correct gradient reduction to validate autograd correctness across all operations.
 - Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
 - Added NumPy `.npz` model serialization, Graphviz computation graph export, and a `Trainer` with validation, early stopping, and checkpoint saving.
-- Validated the framework end-to-end with 88 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
+- Validated the framework end-to-end with 111 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.

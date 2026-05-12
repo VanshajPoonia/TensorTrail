@@ -10,6 +10,16 @@ readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "TensorTrail" }]
 dependencies = ["numpy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Repository = "https://github.com/VanshajPoonia/TensorTrail"
+Documentation = "https://github.com/VanshajPoonia/TensorTrail/tree/main/docs"
 
 [project.optional-dependencies]
 dev = ["pytest"]

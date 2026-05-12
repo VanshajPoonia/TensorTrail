@@ -19,3 +19,4 @@ examples:
 	$(PYTHON) examples/train_regularized_mlp.py
 	$(PYTHON) examples/train_tiny_cnn.py
 	$(PYTHON) examples/visualize_autograd_graph.py
+	$(PYTHON) examples/benchmark_ops.py

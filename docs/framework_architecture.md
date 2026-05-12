@@ -22,12 +22,13 @@ Core responsibilities:
 
 Contains reusable functions that sit above the core `Tensor` class:
 
-- `relu`, `sigmoid`, `tanh`
 - numerically stable `softmax` and `log_softmax`
 - `one_hot`
 - classification `accuracy`
 
 These operations are expressed with TensorTrail tensors where gradients matter.
+Elementwise activations live as `Tensor` methods and module wrappers in
+`modules.py`.
 
 ## `modules.py`
 
@@ -125,7 +126,8 @@ stored in order as `param_N`; non-trainable buffers such as BatchNorm running
 statistics are stored as `buffer_N`.
 
 Loading validates parameter count and shape to catch mismatched model
-structures.
+structures. Named checkpoints are also supported with module paths such as
+`param:layers.0.weight` for clearer state inspection.
 
 ## `graph.py`
 
