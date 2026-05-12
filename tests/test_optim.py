@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from tensortrail import Adam, SGD, Tensor
 
@@ -40,6 +41,26 @@ def test_adam_updates_parameters():
     assert p.grad is None
 
 
+def test_sgd_rejects_invalid_hyperparameters():
+    p = Tensor([1.0], requires_grad=True)
+    with pytest.raises(ValueError, match="learning rate"):
+        SGD([p], lr=-0.1)
+    with pytest.raises(ValueError, match="momentum"):
+        SGD([p], momentum=-0.1)
+
+
+def test_adam_rejects_invalid_hyperparameters():
+    p = Tensor([1.0], requires_grad=True)
+    with pytest.raises(ValueError, match="learning rate"):
+        Adam([p], lr=-0.1)
+    with pytest.raises(ValueError, match="beta1"):
+        Adam([p], beta1=1.0)
+    with pytest.raises(ValueError, match="beta2"):
+        Adam([p], beta2=-0.1)
+    with pytest.raises(ValueError, match="eps"):
+        Adam([p], eps=0.0)
+
+
 def test_xor_training_reduces_loss():
     from tensortrail import BinaryCrossEntropyLoss, Linear, Sequential, Sigmoid, Tanh
     from tensortrail.data import make_xor
@@ -60,4 +81,3 @@ def test_xor_training_reduces_loss():
     final = loss_fn(model(x), y).item()
 
     assert final < initial * 0.5
-

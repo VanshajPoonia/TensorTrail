@@ -47,6 +47,12 @@ def test_dataloader_returns_tensor_batches():
     assert y_b.shape == (8,)
 
 
+def test_dataloader_rejects_non_positive_batch_size():
+    ds = _make_ds(20, 4)
+    with pytest.raises(ValueError, match="batch_size"):
+        DataLoader(ds, batch_size=0)
+
+
 def test_dataloader_last_batch_smaller():
     ds = _make_ds(25, 4)
     loader = DataLoader(ds, batch_size=10, shuffle=False)

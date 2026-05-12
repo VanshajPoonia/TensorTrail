@@ -33,6 +33,10 @@ class SGD(Optimizer):
         momentum: float = 0.0,
     ) -> None:
         super().__init__(params)
+        if lr < 0:
+            raise ValueError("SGD learning rate lr must be non-negative.")
+        if momentum < 0:
+            raise ValueError("SGD momentum must be non-negative.")
         self.lr = lr
         self.momentum = momentum
         self._velocity = [np.zeros_like(param.data) for param in self.params]
@@ -61,6 +65,14 @@ class Adam(Optimizer):
         eps: float = 1e-8,
     ) -> None:
         super().__init__(params)
+        if lr < 0:
+            raise ValueError("Adam learning rate lr must be non-negative.")
+        if not 0 <= beta1 < 1:
+            raise ValueError("Adam beta1 must satisfy 0 <= beta1 < 1.")
+        if not 0 <= beta2 < 1:
+            raise ValueError("Adam beta2 must satisfy 0 <= beta2 < 1.")
+        if eps <= 0:
+            raise ValueError("Adam eps must be positive.")
         self.lr = lr
         self.beta1 = beta1
         self.beta2 = beta2
@@ -80,4 +92,3 @@ class Adam(Optimizer):
             m_hat = self._m[i] / (1 - self.beta1**self.t)
             v_hat = self._v[i] / (1 - self.beta2**self.t)
             param.data -= self.lr * m_hat / (np.sqrt(v_hat) + self.eps)
-

@@ -35,6 +35,8 @@ class DataLoader:
         shuffle: bool = False,
         seed: int | None = None,
     ) -> None:
+        if batch_size <= 0:
+            raise ValueError("DataLoader batch_size must be positive.")
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -99,4 +101,3 @@ def make_mnist_like(
     x = prototypes[labels] + rng.normal(0, 0.12, size=(n_samples, n_features))
     x = np.clip(x, 0, 1)
     return Dataset(x, labels)
-
