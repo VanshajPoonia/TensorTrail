@@ -1,4 +1,4 @@
-PYTHON ?= python
+PYTHON ?= $(shell if [ -x .venv/bin/python ]; then printf ".venv/bin/python"; else command -v python3 2>/dev/null || command -v python; fi)
 PIP ?= $(PYTHON) -m pip
 
 .PHONY: install test xor examples
@@ -7,7 +7,7 @@ install:
 	$(PIP) install -e ".[dev]"
 
 test:
-	pytest
+	$(PYTHON) -m pytest
 
 xor:
 	$(PYTHON) examples/train_xor.py
