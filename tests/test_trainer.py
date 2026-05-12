@@ -5,6 +5,7 @@ from tensortrail import (
     CrossEntropyLoss,
     DataLoader,
     Dataset,
+    Dropout,
     Linear,
     ReLU,
     SGD,
@@ -113,6 +114,28 @@ def test_trainer_evaluate_returns_metrics():
     assert results["loss"] >= 0.0
 
 
+def test_trainer_evaluate_preserves_model_mode():
+    dataset = make_mnist_like(n_samples=20, n_features=4, n_classes=2, seed=7)
+    loader = DataLoader(dataset, batch_size=10, shuffle=False)
+    model = Sequential(Linear(4, 4, seed=1), Dropout(p=0.2, seed=2), Linear(4, 2, seed=3))
+    trainer = Trainer(
+        model=model,
+        loss_fn=CrossEntropyLoss(),
+        optimizer=Adam(model.parameters(), lr=0.0),
+        metrics=["accuracy"],
+    )
+
+    assert model.training is True
+    trainer.evaluate(loader)
+    assert model.training is True
+    assert model.layers[1].training is True
+
+    model.eval()
+    trainer.evaluate(loader)
+    assert model.training is False
+    assert model.layers[1].training is False
+
+
 def test_trainer_early_stopping_with_dataloader():
     dataset = make_mnist_like(n_samples=60, n_features=6, n_classes=3, seed=9)
     train_ds = Dataset(dataset.x[:40], dataset.y[:40])
@@ -141,6 +164,26 @@ def test_trainer_early_stopping_with_dataloader():
     assert len(history["val_loss"]) == 3
 
 
+def test_trainer_validation_preserves_training_mode_during_fit():
+    dataset = make_mnist_like(n_samples=40, n_features=4, n_classes=2, seed=9)
+    train_ds = Dataset(dataset.x[:20], dataset.y[:20])
+    val_ds = Dataset(dataset.x[20:], dataset.y[20:])
+    train_loader = DataLoader(train_ds, batch_size=10, shuffle=False)
+    val_loader = DataLoader(val_ds, batch_size=10, shuffle=False)
+    model = Sequential(Linear(4, 4, seed=1), Dropout(p=0.2, seed=2), Linear(4, 2, seed=3))
+    trainer = Trainer(
+        model=model,
+        loss_fn=CrossEntropyLoss(),
+        optimizer=SGD(model.parameters(), lr=0.0),
+        metrics=["accuracy"],
+    )
+
+    trainer.fit(train_loader, val_loader=val_loader, epochs=2, log_every=None)
+
+    assert model.training is True
+    assert model.layers[1].training is True
+
+
 def test_trainer_checkpoint_saving_with_dataloader(tmp_path):
     dataset = make_mnist_like(n_samples=40, n_features=6, n_classes=3, seed=11)
     loader = DataLoader(dataset, batch_size=10, shuffle=False)
@@ -155,6 +198,20 @@ def test_trainer_checkpoint_saving_with_dataloader(tmp_path):
     trainer.fit(loader, epochs=3, log_every=None, checkpoint_path=checkpoint_path)
 
     assert checkpoint_path.exists()
+
+
+def test_trainer_rejects_empty_loader():
+    dataset = Dataset([], [])
+    loader = DataLoader(dataset, batch_size=4, shuffle=False)
+    model = Sequential(Linear(1, 1, seed=1))
+    trainer = Trainer(
+        model=model,
+        loss_fn=CrossEntropyLoss(),
+        optimizer=SGD(model.parameters(), lr=0.0),
+    )
+
+    with pytest.raises(ValueError, match="no batches"):
+        trainer.fit(loader, epochs=1, log_every=None)
 
 
 def test_trainer_unknown_metric_raises():

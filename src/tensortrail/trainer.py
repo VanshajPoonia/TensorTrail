@@ -268,29 +268,40 @@ class Trainer:
         metric_fns: dict[str, MetricFn],
         training: bool,
     ) -> dict[str, float]:
+        previous_training = getattr(self.model, "training", None)
         if training and hasattr(self.model, "train"):
             self.model.train()
         elif hasattr(self.model, "eval"):
             self.model.eval()
 
-        losses: list[float] = []
-        metric_values: dict[str, list[float]] = {name: [] for name in metric_fns}
+        try:
+            losses: list[float] = []
+            metric_values: dict[str, list[float]] = {name: [] for name in metric_fns}
 
-        for x_batch, y_batch in loader:
-            predictions = self.model(x_batch)
-            loss = self.loss_fn(predictions, y_batch)
-            if training:
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-            losses.append(float(loss.item()))
-            for name, fn in metric_fns.items():
-                metric_values[name].append(fn(predictions, y_batch))
+            for x_batch, y_batch in loader:
+                predictions = self.model(x_batch)
+                loss = self.loss_fn(predictions, y_batch)
+                if training:
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+                losses.append(float(loss.item()))
+                for name, fn in metric_fns.items():
+                    metric_values[name].append(fn(predictions, y_batch))
 
-        result: dict[str, float] = {"loss": float(np.mean(losses))}
-        for name, values in metric_values.items():
-            result[name] = float(np.mean(values))
-        return result
+            if not losses:
+                raise ValueError("DataLoader yielded no batches.")
+
+            result: dict[str, float] = {"loss": float(np.mean(losses))}
+            for name, values in metric_values.items():
+                result[name] = float(np.mean(values))
+            return result
+        finally:
+            if not training and previous_training is not None:
+                if previous_training and hasattr(self.model, "train"):
+                    self.model.train()
+                elif hasattr(self.model, "eval"):
+                    self.model.eval()
 
 
 def classification_accuracy(logits: Tensor, labels: Tensor) -> float:
