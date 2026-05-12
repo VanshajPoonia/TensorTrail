@@ -12,7 +12,7 @@ authors = [{ name = "TensorTrail" }]
 dependencies = ["numpy"]
 
 [project.optional-dependencies]
-dev = ["pytest", "matplotlib"]
+dev = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
