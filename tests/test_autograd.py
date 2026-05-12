@@ -72,6 +72,56 @@ def test_matmul_gradients():
     np.testing.assert_allclose(w.grad, x.data.T @ np.ones((2, 2)))
 
 
+def test_matmul_vector_vector_gradients():
+    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = Tensor([4.0, 5.0, 6.0], requires_grad=True)
+
+    out = x @ y
+    out.backward()
+
+    np.testing.assert_allclose(x.grad, y.data)
+    np.testing.assert_allclose(y.grad, x.data)
+
+
+def test_matmul_vector_matrix_gradients():
+    x = Tensor([1.0, 2.0], requires_grad=True)
+    w = Tensor([[3.0, 4.0, 5.0], [6.0, 7.0, 8.0]], requires_grad=True)
+
+    out = x @ w
+    out.backward(np.array([0.5, 1.0, 1.5]))
+
+    np.testing.assert_allclose(x.grad, np.array([0.5, 1.0, 1.5]) @ w.data.T)
+    np.testing.assert_allclose(w.grad, np.outer(x.data, [0.5, 1.0, 1.5]))
+
+
+def test_matmul_matrix_vector_gradients():
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+    w = Tensor([5.0, 6.0], requires_grad=True)
+
+    out = x @ w
+    out.backward(np.array([0.25, 0.75]))
+
+    np.testing.assert_allclose(x.grad, np.outer([0.25, 0.75], w.data))
+    np.testing.assert_allclose(w.grad, x.data.T @ np.array([0.25, 0.75]))
+
+
+def test_matmul_batched_broadcast_gradients():
+    x_data = np.arange(24.0).reshape(2, 3, 4) / 10
+    w_data = np.arange(20.0).reshape(4, 5) / 10
+    x = Tensor(x_data, requires_grad=True)
+    w = Tensor(w_data, requires_grad=True)
+
+    out = x @ w
+    grad = np.arange(out.data.size, dtype=float).reshape(out.shape) / 100
+    out.backward(grad)
+
+    np.testing.assert_allclose(x.grad, grad @ w_data.T)
+    expected_w_grad = np.zeros_like(w_data)
+    for batch in range(x_data.shape[0]):
+        expected_w_grad += x_data[batch].T @ grad[batch]
+    np.testing.assert_allclose(w.grad, expected_w_grad)
+
+
 def test_sum_and_mean_gradients_with_axes():
     x = Tensor(np.arange(6.0).reshape(2, 3), requires_grad=True)
     x.sum(axis=0).backward(np.array([1.0, 2.0, 3.0]))
@@ -83,6 +133,30 @@ def test_sum_and_mean_gradients_with_axes():
         x.grad,
         [[2 / 3, 2 / 3, 2 / 3], [4 / 3, 4 / 3, 4 / 3]],
     )
+
+    x.zero_grad()
+    x.sum(axis=(-1, -2)).backward(np.array(2.0))
+    np.testing.assert_allclose(x.grad, np.full_like(x.data, 2.0))
+
+
+def test_scalar_broadcasting_gradients():
+    x = Tensor(np.arange(6.0).reshape(2, 3), requires_grad=True)
+    scale = Tensor(2.0, requires_grad=True)
+
+    (x * scale).sum().backward()
+
+    np.testing.assert_allclose(x.grad, np.full_like(x.data, 2.0))
+    np.testing.assert_allclose(scale.grad, np.array(15.0))
+
+
+def test_repeated_branch_gradient_accumulation():
+    x = Tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = x * 2
+    z = (y + y * y + y).sum()
+
+    z.backward()
+
+    np.testing.assert_allclose(x.grad, 8 * x.data + 4)
 
 
 def test_reshape_and_transpose_gradients():

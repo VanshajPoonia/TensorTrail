@@ -66,6 +66,44 @@ def _checked_matmul_data(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         ) from exc
 
 
+def _matmul_backward(
+    out_grad: np.ndarray,
+    left: np.ndarray,
+    right: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return gradients for NumPy-style matmul operands.
+
+    NumPy treats 1D operands as temporary row/column matrices and broadcasts
+    leading batch dimensions. The backward pass mirrors that shape dance, then
+    reduces gradients back to the original operand shapes.
+    """
+    left_was_1d = left.ndim == 1
+    right_was_1d = right.ndim == 1
+
+    left_mat = left[np.newaxis, :] if left_was_1d else left
+    right_mat = right[:, np.newaxis] if right_was_1d else right
+
+    grad = np.asarray(out_grad, dtype=float)
+    if left_was_1d and right_was_1d:
+        grad_mat = grad.reshape(1, 1)
+    elif left_was_1d:
+        grad_mat = np.expand_dims(grad, axis=-2)
+    elif right_was_1d:
+        grad_mat = np.expand_dims(grad, axis=-1)
+    else:
+        grad_mat = grad
+
+    left_grad = _matmul_data(grad_mat, np.swapaxes(right_mat, -1, -2))
+    right_grad = _matmul_data(np.swapaxes(left_mat, -1, -2), grad_mat)
+
+    if left_was_1d:
+        left_grad = np.squeeze(left_grad, axis=-2)
+    if right_was_1d:
+        right_grad = np.squeeze(right_grad, axis=-1)
+
+    return _unbroadcast(left_grad, left.shape), _unbroadcast(right_grad, right.shape)
+
+
 def _children_if_tracking(requires_grad: bool, *children: "Tensor") -> tuple["Tensor", ...]:
     return tuple(children) if requires_grad else ()
 
@@ -266,10 +304,9 @@ class Tensor:
         def _backward() -> None:
             if out.grad is None:
                 return
-            self_grad = _matmul_data(out.grad, np.swapaxes(other.data, -1, -2))
-            other_grad = _matmul_data(np.swapaxes(self.data, -1, -2), out.grad)
-            self._add_grad(_unbroadcast(self_grad, self.shape))
-            other._add_grad(_unbroadcast(other_grad, other.shape))
+            self_grad, other_grad = _matmul_backward(out.grad, self.data, other.data)
+            self._add_grad(self_grad)
+            other._add_grad(other_grad)
 
         out._backward = _backward
         return out
