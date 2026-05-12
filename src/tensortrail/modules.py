@@ -46,18 +46,24 @@ class Module:
 
     def parameters(self) -> list[Tensor]:
         """Return trainable tensor parameters owned by this module."""
-        params: list[Tensor] = []
-        for value in self.__dict__.values():
+        return [param for _, param in self.named_parameters()]
+
+    def named_parameters(self, prefix: str = "") -> list[tuple[str, Tensor]]:
+        """Return ``(name, parameter)`` pairs owned by this module."""
+        params: list[tuple[str, Tensor]] = []
+        for name, value in self.__dict__.items():
+            qualified_name = f"{prefix}.{name}" if prefix else name
             if isinstance(value, Tensor) and value.requires_grad:
-                params.append(value)
+                params.append((qualified_name, value))
             elif isinstance(value, Module):
-                params.extend(value.parameters())
+                params.extend(value.named_parameters(qualified_name))
             elif isinstance(value, (list, tuple)):
-                for item in value:
+                for index, item in enumerate(value):
+                    item_name = f"{qualified_name}.{index}"
                     if isinstance(item, Module):
-                        params.extend(item.parameters())
+                        params.extend(item.named_parameters(item_name))
                     elif isinstance(item, Tensor) and item.requires_grad:
-                        params.append(item)
+                        params.append((item_name, item))
         return params
 
     def zero_grad(self) -> None:
@@ -71,13 +77,24 @@ class Module:
         Buffers are values such as BatchNorm running statistics: they are not
         optimized by gradient descent, but they are part of a model checkpoint.
         """
-        buffers: list[np.ndarray] = []
+        return [buffer for _, buffer in self.named_buffers()]
+
+    def named_buffers(self, prefix: str = "") -> list[tuple[str, np.ndarray]]:
+        """Return ``(name, buffer)`` pairs owned by this module."""
+        buffers: list[tuple[str, np.ndarray]] = []
         for name in self._buffers:
             value = getattr(self, name)
             if isinstance(value, np.ndarray):
-                buffers.append(value)
-        for child in self.children():
-            buffers.extend(child.buffers())
+                qualified_name = f"{prefix}.{name}" if prefix else name
+                buffers.append((qualified_name, value))
+        for name, value in self.__dict__.items():
+            qualified_name = f"{prefix}.{name}" if prefix else name
+            if isinstance(value, Module):
+                buffers.extend(value.named_buffers(qualified_name))
+            elif isinstance(value, (list, tuple)):
+                for index, item in enumerate(value):
+                    if isinstance(item, Module):
+                        buffers.extend(item.named_buffers(f"{qualified_name}.{index}"))
         return buffers
 
     def train(self) -> None:

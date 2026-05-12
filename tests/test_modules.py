@@ -35,6 +35,19 @@ def test_sequential_forward_and_parameters():
     assert len(model.parameters()) == 4
 
 
+def test_named_parameters_include_module_paths():
+    model = Sequential(Linear(2, 4, seed=1), ReLU(), Linear(4, 1, seed=2))
+
+    names = [name for name, _ in model.named_parameters()]
+
+    assert names == [
+        "layers.0.weight",
+        "layers.0.bias",
+        "layers.2.weight",
+        "layers.2.bias",
+    ]
+
+
 def test_flatten_preserves_batch_dimension():
     layer = Flatten()
     x = Tensor(np.ones((4, 2, 3)))
@@ -77,6 +90,10 @@ def test_batchnorm1d_normalizes_and_tracks_running_stats():
     assert not np.allclose(layer.running_mean, np.zeros(3))
     assert len(layer.parameters()) == 2
     assert len(layer.buffers()) == 2
+    assert [name for name, _ in layer.named_buffers()] == [
+        "running_mean",
+        "running_var",
+    ]
     assert x.grad.shape == x.shape
     assert layer.gamma.grad.shape == (3,)
     assert layer.beta.grad.shape == (3,)

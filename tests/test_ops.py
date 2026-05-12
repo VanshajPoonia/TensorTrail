@@ -1,5 +1,6 @@
 import numpy as np
 
+import tensortrail
 from tensortrail import Tensor
 from tensortrail.ops import accuracy, log_softmax, one_hot, softmax
 
@@ -37,3 +38,9 @@ def test_softmax_log_softmax_one_hot_accuracy():
     np.testing.assert_allclose(one_hot([2, 0], 3).data, [[0, 0, 1], [1, 0, 0]])
     assert accuracy(logits, [2, 0]) == 1.0
 
+
+def test_ops_are_exported_at_top_level():
+    assert tensortrail.softmax is softmax
+    assert tensortrail.log_softmax is log_softmax
+    assert tensortrail.one_hot is one_hot
+    assert tensortrail.accuracy is accuracy

@@ -21,6 +21,7 @@ from .modules import (
     Tanh,
 )
 from .optim import Adam, SGD
+from .ops import accuracy, log_softmax, one_hot, softmax
 from .serialization import load_model, save_model
 from .tensor import Tensor, tensor
 from .trainer import Trainer, classification_accuracy
@@ -49,14 +50,18 @@ __all__ = [
     "Tanh",
     "Tensor",
     "Trainer",
+    "accuracy",
     "accuracy_score",
     "binary_accuracy",
     "classification_accuracy",
     "gradcheck",
     "load_model",
+    "log_softmax",
     "make_mnist_like",
     "make_xor",
+    "one_hot",
     "save_model",
+    "softmax",
     "tensor",
     "train_test_split",
     "visualize_graph",
