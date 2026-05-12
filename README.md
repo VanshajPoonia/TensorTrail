@@ -54,6 +54,7 @@ If your shell exposes Python as `python3`, use:
 
 ```bash
 python3 -m pip install -e .
+python3 -m pip install -e ".[dev]"
 ```
 
 ## Quickstart
@@ -243,6 +244,7 @@ python examples/train_mlp_classifier.py
 python examples/train_regularized_mlp.py
 python examples/train_tiny_cnn.py
 python examples/visualize_autograd_graph.py
+python examples/benchmark_ops.py
 pytest
 ```
 
