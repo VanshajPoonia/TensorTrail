@@ -20,6 +20,17 @@ python examples/train_xor.py
 Use this as the fastest sanity check that tensors, layers, losses, optimizers,
 and backpropagation are connected correctly.
 
+## `train_binary_classifier.py`
+
+Trains a small binary classifier from raw logits with `BCEWithLogitsLoss`.
+
+```bash
+python examples/train_binary_classifier.py
+```
+
+Use this when you want a binary example that avoids putting `Sigmoid` in the
+model itself.
+
 ## `train_mnist_like.py`
 
 Trains an MLP on a synthetic flattened-image classification dataset.

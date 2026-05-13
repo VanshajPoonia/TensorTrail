@@ -43,10 +43,13 @@ Loss functions turn model predictions into scalar tensors that can call
 
 - `MSELoss`: regression-style squared error.
 - `BinaryCrossEntropyLoss`: binary classification from probabilities.
+- `BCEWithLogitsLoss`: binary classification from raw logits.
 - `CrossEntropyLoss`: multi-class classification from raw logits.
 
 Because losses are implemented with TensorTrail operations, their gradients
 flow through the same dynamic graph as every other tensor operation.
+For binary classifiers, `BCEWithLogitsLoss` is usually preferred when the model
+does not already include a final sigmoid.
 
 ## Optimizers
 
@@ -127,6 +130,7 @@ results = trainer.evaluate(val_loader)
 ## How The Examples Compose The Blocks
 
 - `train_xor.py`: tensors, MLP layers, binary cross entropy, Adam.
+- `train_binary_classifier.py`: raw logits, `BCEWithLogitsLoss`, Adam.
 - `train_mnist_like.py`: synthetic data, multi-class MLP, cross entropy.
 - `train_mlp_classifier.py`: DataLoader, BatchNorm, Dropout, Trainer.
 - `train_regularized_mlp.py`: deeper regularized MLP with validation metrics.

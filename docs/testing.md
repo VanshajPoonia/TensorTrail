@@ -31,6 +31,7 @@ The full portfolio smoke check is:
 
 ```bash
 python examples/train_xor.py
+python examples/train_binary_classifier.py
 python examples/train_mnist_like.py
 python examples/train_mlp_classifier.py
 python examples/train_regularized_mlp.py

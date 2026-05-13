@@ -14,6 +14,7 @@ xor:
 
 examples:
 	$(PYTHON) examples/train_xor.py
+	$(PYTHON) examples/train_binary_classifier.py
 	$(PYTHON) examples/train_mnist_like.py
 	$(PYTHON) examples/train_mlp_classifier.py
 	$(PYTHON) examples/train_regularized_mlp.py

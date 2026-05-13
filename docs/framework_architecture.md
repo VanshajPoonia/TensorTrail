@@ -60,8 +60,11 @@ differentiable:
 
 - `MSELoss`
 - `BinaryCrossEntropyLoss`
+- `BCEWithLogitsLoss`
 - `CrossEntropyLoss`
 
+`BCEWithLogitsLoss` uses a stable logits-based binary cross entropy and a
+custom backward closure for logits.
 `CrossEntropyLoss` uses `log_softmax` and one-hot targets for stable
 multi-class classification.
 

@@ -31,7 +31,7 @@ train MLPs and tiny CNNs on offline synthetic datasets.
 - Graphviz DOT computation graph export
 - Layers: `Linear`, `Conv2D`, pooling, normalization, dropout, activations
 - `Sequential` model composition
-- Losses: mean squared error, binary cross entropy, multi-class cross entropy
+- Losses: mean squared error, binary cross entropy, BCE with logits, multi-class cross entropy
 - Optimizers: SGD, momentum SGD, Adam
 - Global gradient clipping through optimizers and `Trainer`
 - Epoch-level learning-rate schedules: `StepLR` and `ExponentialLR`
@@ -96,6 +96,15 @@ model = Sequential(
     Linear(8, 1),
     Sigmoid(),
 )
+```
+
+For binary classification, use `BinaryCrossEntropyLoss` when a model already
+outputs probabilities. Use `BCEWithLogitsLoss` when the model outputs raw
+logits; it combines sigmoid and binary cross entropy in a numerically stable
+loss.
+
+```bash
+python examples/train_binary_classifier.py
 ```
 
 ## MLP Classifier Example
@@ -262,6 +271,7 @@ Main smoke checks:
 
 ```bash
 python examples/train_xor.py
+python examples/train_binary_classifier.py
 python examples/train_mnist_like.py
 python examples/train_mlp_classifier.py
 python examples/train_regularized_mlp.py
@@ -282,7 +292,6 @@ See [examples/README.md](examples/README.md) for a guide to each script.
 ## Roadmap
 
 - Add notebook walkthroughs for the autograd internals
-- Add `BCEWithLogitsLoss` for binary classification from logits
 - Add an im2col Conv2D implementation for faster educational comparison
 
 ## Limitations
@@ -299,6 +308,6 @@ production frameworks.
 
 - Built TensorTrail, a from-scratch neural network framework in Python and NumPy with reverse-mode automatic differentiation, dynamic computation graphs, and broadcasting-aware gradient accumulation.
 - Implemented a topological backward pass, finite-difference gradient checker, and broadcasting-correct gradient reduction to validate autograd correctness across all operations.
-- Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
+- Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `BCEWithLogitsLoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
 - Added NumPy `.npz` model serialization, Graphviz computation graph export, optional gradient clipping, learning-rate schedules, and a `Trainer` with validation, early stopping, and checkpoint saving.
-- Validated the framework end-to-end with 130 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
+- Validated the framework end-to-end with 137 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
