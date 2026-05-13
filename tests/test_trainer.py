@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from tensortrail import (
@@ -7,6 +8,7 @@ from tensortrail import (
     Dataset,
     Dropout,
     Linear,
+    MSELoss,
     ReLU,
     SGD,
     Sequential,
@@ -218,3 +220,32 @@ def test_trainer_unknown_metric_raises():
     model = Sequential(Linear(4, 3, seed=1))
     with pytest.raises(ValueError, match="Unknown built-in metric"):
         Trainer(model=model, loss_fn=None, optimizer=None, metrics=["f1_score"])
+
+
+def test_trainer_gradient_clipping_limits_update_magnitude():
+    dataset = Dataset([[10.0]], [[0.0]])
+    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    model = Sequential(Linear(1, 1, bias=False, seed=1))
+    model.layers[0].weight.data[...] = 1.0
+    trainer = Trainer(
+        model=model,
+        loss_fn=MSELoss(),
+        optimizer=SGD(model.parameters(), lr=1.0),
+        clip_grad_norm=0.5,
+    )
+
+    trainer.fit(loader, epochs=1, log_every=None)
+
+    np.testing.assert_allclose(model.layers[0].weight.data, [[0.5]])
+
+
+def test_trainer_rejects_invalid_gradient_clipping_value():
+    model = Sequential(Linear(1, 1, seed=1))
+
+    with pytest.raises(ValueError, match="clip_grad_norm"):
+        Trainer(
+            model=model,
+            loss_fn=MSELoss(),
+            optimizer=SGD(model.parameters(), lr=0.1),
+            clip_grad_norm=0.0,
+        )

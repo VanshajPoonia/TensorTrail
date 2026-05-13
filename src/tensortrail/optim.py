@@ -18,6 +18,24 @@ class Optimizer:
         for param in self.params:
             param.zero_grad()
 
+    def clip_grad_norm(self, max_norm: float, eps: float = 1e-12) -> float:
+        """Clip gradients by global L2 norm and return the pre-clip norm."""
+        if max_norm <= 0:
+            raise ValueError("max_norm must be positive.")
+
+        squared_norm = 0.0
+        for param in self.params:
+            if param.grad is not None:
+                squared_norm += float(np.sum(param.grad * param.grad))
+
+        total_norm = float(np.sqrt(squared_norm))
+        if total_norm > max_norm:
+            scale = max_norm / (total_norm + eps)
+            for param in self.params:
+                if param.grad is not None:
+                    param.grad *= scale
+        return total_norm
+
     def step(self) -> None:
         """Update parameters in place."""
         raise NotImplementedError

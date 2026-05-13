@@ -41,6 +41,39 @@ def test_adam_updates_parameters():
     assert p.grad is None
 
 
+def test_clip_grad_norm_limits_global_norm():
+    p1 = Tensor([0.0, 0.0], requires_grad=True)
+    p2 = Tensor([0.0], requires_grad=True)
+    p1.grad = np.array([3.0, 4.0])
+    p2.grad = np.array([12.0])
+    opt = SGD([p1, p2], lr=0.1)
+
+    original_norm = opt.clip_grad_norm(1.0)
+    clipped_norm = np.sqrt(np.sum(p1.grad * p1.grad) + np.sum(p2.grad * p2.grad))
+
+    assert original_norm == pytest.approx(13.0)
+    assert clipped_norm == pytest.approx(1.0)
+
+
+def test_clip_grad_norm_affects_next_step():
+    p = Tensor([1.0], requires_grad=True)
+    p.grad = np.array([10.0])
+    opt = SGD([p], lr=0.1)
+
+    opt.clip_grad_norm(1.0)
+    opt.step()
+
+    np.testing.assert_allclose(p.data, [0.9])
+
+
+def test_clip_grad_norm_rejects_invalid_max_norm():
+    p = Tensor([1.0], requires_grad=True)
+    opt = SGD([p], lr=0.1)
+
+    with pytest.raises(ValueError, match="max_norm"):
+        opt.clip_grad_norm(0.0)
+
+
 def test_sgd_rejects_invalid_hyperparameters():
     p = Tensor([1.0], requires_grad=True)
     with pytest.raises(ValueError, match="learning rate"):

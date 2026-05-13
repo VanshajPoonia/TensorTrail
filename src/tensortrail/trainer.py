@@ -32,6 +32,7 @@ class Trainer:
             loss_fn=CrossEntropyLoss(),
             optimizer=Adam(model.parameters(), lr=0.001),
             metrics=["accuracy"],
+            clip_grad_norm=1.0,
         )
         history = trainer.fit(train_loader, val_loader=val_loader, epochs=20, log_every=5)
         results = trainer.evaluate(test_loader)
@@ -44,10 +45,14 @@ class Trainer:
         optimizer,
         metrics: list[str] | Metrics = None,
         metric_fn: MetricFn | None = None,
+        clip_grad_norm: float | None = None,
     ) -> None:
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+        if clip_grad_norm is not None and clip_grad_norm <= 0:
+            raise ValueError("clip_grad_norm must be positive when set.")
+        self.clip_grad_norm = clip_grad_norm
         # ``metrics`` accepts a list of built-in names (e.g. ["accuracy"]) or a
         # mapping of {name: callable}.  ``metric_fn`` is the legacy parameter.
         self._metrics_arg = metrics
@@ -284,6 +289,8 @@ class Trainer:
                 if training:
                     self.optimizer.zero_grad()
                     loss.backward()
+                    if self.clip_grad_norm is not None:
+                        self.optimizer.clip_grad_norm(self.clip_grad_norm)
                     self.optimizer.step()
                 losses.append(float(loss.item()))
                 for name, fn in metric_fns.items():
