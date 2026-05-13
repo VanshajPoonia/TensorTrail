@@ -55,6 +55,8 @@ Optimizers update trainable tensors in place using accumulated gradients.
 - `SGD`: simple gradient descent.
 - `SGD(..., momentum=...)`: momentum variant.
 - `Adam`: adaptive first/second moment optimizer.
+- `StepLR`: decay the learning rate every fixed number of epochs.
+- `ExponentialLR`: decay the learning rate every epoch.
 
 All optimizers also expose `clip_grad_norm(max_norm)`, which rescales current
 gradients by global L2 norm before an update. This is useful when an example's
@@ -68,6 +70,13 @@ optimizer.zero_grad()
 loss.backward()
 optimizer.clip_grad_norm(1.0)
 optimizer.step()
+```
+
+Schedulers wrap an optimizer and update its `lr` over time:
+
+```python
+optimizer = Adam(model.parameters(), lr=0.01)
+scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
 ```
 
 ## DataLoader
@@ -94,17 +103,21 @@ The project uses offline synthetic datasets so examples run without downloads.
 - evaluate validation data
 - log metrics
 - optionally clip gradients before optimizer steps
+- optionally step a learning-rate scheduler once per epoch
 - optionally early-stop and save checkpoints
 
 Example:
 
 ```python
+optimizer = Adam(model.parameters(), lr=0.01)
+scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
 trainer = Trainer(
     model=model,
     loss_fn=CrossEntropyLoss(),
-    optimizer=Adam(model.parameters(), lr=0.01),
+    optimizer=optimizer,
     metrics=["accuracy"],
     clip_grad_norm=1.0,
+    scheduler=scheduler,
 )
 
 history = trainer.fit(train_loader, val_loader=val_loader, epochs=20)

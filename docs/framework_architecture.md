@@ -73,9 +73,11 @@ Updates parameters in place:
 - SGD with momentum
 - `Adam`
 - global gradient clipping by L2 norm
+- epoch-level `StepLR` and `ExponentialLR` schedules
 
 Optimizers operate directly on `Tensor.data` and `Tensor.grad`, keeping the
-training loop simple.
+training loop simple. Schedulers mutate the optimizer's `lr` without changing
+the optimizer's accumulated state.
 
 ## `data.py`
 
@@ -98,6 +100,7 @@ Holds the supervised training loop. `Trainer` supports:
 - named metrics such as `"accuracy"`
 - logging intervals
 - optional gradient clipping before optimizer steps
+- optional learning-rate scheduler step once per epoch
 - early stopping
 - optional best-checkpoint saving
 - `evaluate()` for validation or test sets
