@@ -12,6 +12,7 @@ from tensortrail import (
     ReLU,
     SGD,
     Sequential,
+    StepLR,
     Trainer,
     classification_accuracy,
     make_mnist_like,
@@ -249,3 +250,22 @@ def test_trainer_rejects_invalid_gradient_clipping_value():
             optimizer=SGD(model.parameters(), lr=0.1),
             clip_grad_norm=0.0,
         )
+
+
+def test_trainer_steps_scheduler_once_per_completed_epoch():
+    dataset = Dataset([[1.0], [2.0]], [[0.0], [0.0]])
+    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    model = Sequential(Linear(1, 1, seed=1))
+    optimizer = SGD(model.parameters(), lr=0.2)
+    scheduler = StepLR(optimizer, step_size=1, gamma=0.5)
+    trainer = Trainer(
+        model=model,
+        loss_fn=MSELoss(),
+        optimizer=optimizer,
+        scheduler=scheduler,
+    )
+
+    trainer.fit(loader, epochs=3, log_every=None)
+
+    assert scheduler.last_epoch == 3
+    assert optimizer.lr == pytest.approx(0.025)

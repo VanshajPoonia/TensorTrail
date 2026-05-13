@@ -41,6 +41,63 @@ class Optimizer:
         raise NotImplementedError
 
 
+class LRScheduler:
+    """Base class for simple epoch-level learning-rate schedules."""
+
+    def __init__(self, optimizer: Optimizer) -> None:
+        if not hasattr(optimizer, "lr"):
+            raise TypeError("Learning-rate schedulers require an optimizer with an lr.")
+        self.optimizer = optimizer
+        self.last_epoch = 0
+
+    def get_lr(self) -> float:
+        """Return the optimizer's current learning rate."""
+        return float(self.optimizer.lr)
+
+    def step(self) -> float:
+        """Advance the schedule by one epoch and return the new learning rate."""
+        raise NotImplementedError
+
+
+class StepLR(LRScheduler):
+    """Decay the learning rate by ``gamma`` every ``step_size`` epochs."""
+
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        step_size: int,
+        gamma: float = 0.1,
+    ) -> None:
+        if step_size <= 0:
+            raise ValueError("StepLR step_size must be positive.")
+        if gamma <= 0:
+            raise ValueError("StepLR gamma must be positive.")
+        super().__init__(optimizer)
+        self.step_size = step_size
+        self.gamma = gamma
+
+    def step(self) -> float:
+        self.last_epoch += 1
+        if self.last_epoch % self.step_size == 0:
+            self.optimizer.lr *= self.gamma
+        return self.get_lr()
+
+
+class ExponentialLR(LRScheduler):
+    """Decay the learning rate by ``gamma`` every epoch."""
+
+    def __init__(self, optimizer: Optimizer, gamma: float) -> None:
+        if gamma <= 0:
+            raise ValueError("ExponentialLR gamma must be positive.")
+        super().__init__(optimizer)
+        self.gamma = gamma
+
+    def step(self) -> float:
+        self.last_epoch += 1
+        self.optimizer.lr *= self.gamma
+        return self.get_lr()
+
+
 class SGD(Optimizer):
     """Stochastic gradient descent with optional momentum."""
 

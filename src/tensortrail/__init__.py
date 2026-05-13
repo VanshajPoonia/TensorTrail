@@ -20,7 +20,7 @@ from .modules import (
     Sigmoid,
     Tanh,
 )
-from .optim import Adam, SGD
+from .optim import Adam, ExponentialLR, LRScheduler, SGD, StepLR
 from .ops import accuracy, log_softmax, one_hot, softmax
 from .serialization import load_model, save_model
 from .tensor import Tensor, tensor
@@ -36,10 +36,12 @@ __all__ = [
     "DataLoader",
     "Dataset",
     "Dropout",
+    "ExponentialLR",
     "Flatten",
     "GradCheckResult",
     "LayerNorm",
     "Linear",
+    "LRScheduler",
     "MaxPool2D",
     "MSELoss",
     "Module",
@@ -47,6 +49,7 @@ __all__ = [
     "SGD",
     "Sequential",
     "Sigmoid",
+    "StepLR",
     "Tanh",
     "Tensor",
     "Trainer",

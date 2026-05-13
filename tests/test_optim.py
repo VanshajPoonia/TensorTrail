@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from tensortrail import Adam, SGD, Tensor
+from tensortrail import Adam, ExponentialLR, SGD, StepLR, Tensor
 
 
 def test_sgd_updates_parameters():
@@ -72,6 +72,50 @@ def test_clip_grad_norm_rejects_invalid_max_norm():
 
     with pytest.raises(ValueError, match="max_norm"):
         opt.clip_grad_norm(0.0)
+
+
+def test_step_lr_decays_on_step_size_boundary():
+    p = Tensor([1.0], requires_grad=True)
+    opt = SGD([p], lr=0.2)
+    scheduler = StepLR(opt, step_size=2, gamma=0.5)
+
+    assert scheduler.get_lr() == pytest.approx(0.2)
+    assert scheduler.step() == pytest.approx(0.2)
+    assert opt.lr == pytest.approx(0.2)
+    assert scheduler.step() == pytest.approx(0.1)
+    assert opt.lr == pytest.approx(0.1)
+    assert scheduler.last_epoch == 2
+
+
+def test_exponential_lr_decays_every_step():
+    p = Tensor([1.0], requires_grad=True)
+    opt = Adam([p], lr=0.01)
+    scheduler = ExponentialLR(opt, gamma=0.1)
+
+    assert scheduler.step() == pytest.approx(0.001)
+    assert scheduler.step() == pytest.approx(0.0001)
+    assert opt.lr == pytest.approx(0.0001)
+    assert scheduler.last_epoch == 2
+
+
+def test_lr_schedulers_reject_invalid_values():
+    p = Tensor([1.0], requires_grad=True)
+    opt = SGD([p], lr=0.1)
+
+    with pytest.raises(ValueError, match="step_size"):
+        StepLR(opt, step_size=0)
+    with pytest.raises(ValueError, match="gamma"):
+        StepLR(opt, step_size=1, gamma=0.0)
+    with pytest.raises(ValueError, match="gamma"):
+        ExponentialLR(opt, gamma=0.0)
+
+
+def test_lr_scheduler_requires_optimizer_learning_rate():
+    class NoLearningRate:
+        pass
+
+    with pytest.raises(TypeError, match="lr"):
+        StepLR(NoLearningRate(), step_size=1)
 
 
 def test_sgd_rejects_invalid_hyperparameters():

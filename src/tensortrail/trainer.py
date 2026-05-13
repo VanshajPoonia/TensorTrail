@@ -27,12 +27,14 @@ class Trainer:
 
     Example::
 
+        optimizer = Adam(model.parameters(), lr=0.001)
         trainer = Trainer(
             model=model,
             loss_fn=CrossEntropyLoss(),
-            optimizer=Adam(model.parameters(), lr=0.001),
+            optimizer=optimizer,
             metrics=["accuracy"],
             clip_grad_norm=1.0,
+            scheduler=StepLR(optimizer, step_size=10, gamma=0.5),
         )
         history = trainer.fit(train_loader, val_loader=val_loader, epochs=20, log_every=5)
         results = trainer.evaluate(test_loader)
@@ -46,6 +48,7 @@ class Trainer:
         metrics: list[str] | Metrics = None,
         metric_fn: MetricFn | None = None,
         clip_grad_norm: float | None = None,
+        scheduler=None,
     ) -> None:
         self.model = model
         self.loss_fn = loss_fn
@@ -53,6 +56,7 @@ class Trainer:
         if clip_grad_norm is not None and clip_grad_norm <= 0:
             raise ValueError("clip_grad_norm must be positive when set.")
         self.clip_grad_norm = clip_grad_norm
+        self.scheduler = scheduler
         # ``metrics`` accepts a list of built-in names (e.g. ["accuracy"]) or a
         # mapping of {name: callable}.  ``metric_fn`` is the legacy parameter.
         self._metrics_arg = metrics
@@ -191,6 +195,9 @@ class Trainer:
                     save_model(self.model, checkpoint_path)
             else:
                 epochs_without_improvement += 1
+
+            if self.scheduler is not None:
+                self.scheduler.step()
 
             if (
                 early_stopping_patience is not None
