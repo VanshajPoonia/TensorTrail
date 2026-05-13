@@ -3,7 +3,7 @@
 from .data import DataLoader, Dataset, make_mnist_like, make_xor, train_test_split
 from .gradcheck import GradCheckResult, gradcheck
 from .graph import visualize_graph
-from .losses import BinaryCrossEntropyLoss, CrossEntropyLoss, MSELoss
+from .losses import BCEWithLogitsLoss, BinaryCrossEntropyLoss, CrossEntropyLoss, MSELoss
 from .metrics import accuracy_score, binary_accuracy
 from .modules import (
     AveragePool2D,
@@ -29,6 +29,7 @@ from .trainer import Trainer, classification_accuracy
 __all__ = [
     "Adam",
     "AveragePool2D",
+    "BCEWithLogitsLoss",
     "BatchNorm1D",
     "BinaryCrossEntropyLoss",
     "Conv2D",
