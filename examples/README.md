@@ -86,3 +86,16 @@ python examples/benchmark_ops.py
 
 This is not a performance claim. It is meant to show the overhead of a readable
 Python autograd framework compared with direct NumPy calls.
+
+## `plot_training_history.py`
+
+Plots `Trainer.fit` loss and accuracy history for an offline synthetic
+classification dataset.
+
+```bash
+python -m pip install -e ".[plot]"
+python examples/plot_training_history.py
+```
+
+This optional example writes `training_history.png` and is kept out of the
+default smoke command because Matplotlib is not a runtime dependency.

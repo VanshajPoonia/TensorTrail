@@ -23,6 +23,7 @@ Documentation = "https://github.com/VanshajPoonia/TensorTrail/tree/main/docs"
 
 [project.optional-dependencies]
 dev = ["pytest"]
+plot = ["matplotlib"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

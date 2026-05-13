@@ -33,6 +33,7 @@ train MLPs and tiny CNNs on offline synthetic datasets.
 - `Sequential` model composition
 - Losses: mean squared error, binary cross entropy, multi-class cross entropy
 - Optimizers: SGD, momentum SGD, Adam
+- Global gradient clipping through optimizers and `Trainer`
 - Offline datasets and mini-batch `DataLoader`
 - Trainer with validation, metrics, early stopping, and checkpoint saving
 - NumPy `.npz` model save/load
@@ -48,6 +49,12 @@ For development tools:
 
 ```bash
 pip install -e ".[dev]"
+```
+
+For the optional plotting example:
+
+```bash
+pip install -e ".[plot]"
 ```
 
 If your shell exposes Python as `python3`, use:
@@ -160,9 +167,9 @@ For a deeper walkthrough, see [docs/autograd_explained.md](docs/autograd_explain
 - `ops.py` contains softmax, log-softmax, one-hot encoding, and accuracy.
 - `modules.py` defines layers, `Sequential`, train/eval mode, parameters, and buffers.
 - `losses.py` implements differentiable objective functions.
-- `optim.py` updates trainable tensors with SGD or Adam.
+- `optim.py` updates trainable tensors with SGD or Adam and can clip gradients by global norm.
 - `data.py` provides offline datasets, splitting, and mini-batches.
-- `trainer.py` runs training, validation, metrics, early stopping, and checkpoints.
+- `trainer.py` runs training, validation, metrics, gradient clipping, early stopping, and checkpoints.
 - `gradcheck.py` compares analytical gradients with finite differences.
 - `serialization.py` saves and loads NumPy `.npz` model state.
 - `graph.py` exports computation graphs as Graphviz DOT.
@@ -249,16 +256,20 @@ python examples/benchmark_ops.py
 pytest
 ```
 
+Optional plotting example after `pip install -e ".[plot]"`:
+
+```bash
+python examples/plot_training_history.py
+```
+
 See [examples/README.md](examples/README.md) for a guide to each script.
 
 ## Roadmap
 
-- Add richer named checkpoint metadata on top of `.npz` files
-- Add stricter validation and clearer error messages around user inputs
-- Add optional Matplotlib plots for example training histories
 - Add learning-rate schedules
-- Add gradient clipping
-- Add notebook walkthroughs
+- Add notebook walkthroughs for the autograd internals
+- Add `DataLoader` conveniences such as `drop_last`
+- Add `BCEWithLogitsLoss` for binary classification from logits
 - Add an im2col Conv2D implementation for faster educational comparison
 
 ## Limitations
@@ -276,5 +287,5 @@ production frameworks.
 - Built TensorTrail, a from-scratch neural network framework in Python and NumPy with reverse-mode automatic differentiation, dynamic computation graphs, and broadcasting-aware gradient accumulation.
 - Implemented a topological backward pass, finite-difference gradient checker, and broadcasting-correct gradient reduction to validate autograd correctness across all operations.
 - Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
-- Added NumPy `.npz` model serialization, Graphviz computation graph export, and a `Trainer` with validation, early stopping, and checkpoint saving.
-- Validated the framework end-to-end with 111 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
+- Added NumPy `.npz` model serialization, Graphviz computation graph export, optional gradient clipping, and a `Trainer` with validation, early stopping, and checkpoint saving.
+- Validated the framework end-to-end with 118 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.

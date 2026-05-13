@@ -12,6 +12,7 @@ how it works. The suite favors small, direct examples over large fixtures.
   flattening, and sequential composition.
 - Losses, optimizers, data utilities, trainer workflows, metrics, model
   serialization, gradient checking, and graph export.
+- Gradient clipping through optimizers and the high-level trainer.
 - Example-level workflows through fast synthetic datasets.
 
 ## Commands
@@ -40,3 +41,10 @@ python -m pytest
 ```
 
 All examples use offline synthetic data and should complete quickly on CPU.
+
+The optional plotting example requires Matplotlib:
+
+```bash
+python -m pip install -e ".[plot]"
+python examples/plot_training_history.py
+```

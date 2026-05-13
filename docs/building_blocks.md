@@ -56,12 +56,17 @@ Optimizers update trainable tensors in place using accumulated gradients.
 - `SGD(..., momentum=...)`: momentum variant.
 - `Adam`: adaptive first/second moment optimizer.
 
+All optimizers also expose `clip_grad_norm(max_norm)`, which rescales current
+gradients by global L2 norm before an update. This is useful when an example's
+loss surface produces very large gradients.
+
 Typical pattern:
 
 ```python
 loss = loss_fn(model(x_batch), y_batch)
 optimizer.zero_grad()
 loss.backward()
+optimizer.clip_grad_norm(1.0)
 optimizer.step()
 ```
 
@@ -88,6 +93,7 @@ The project uses offline synthetic datasets so examples run without downloads.
 - update parameters
 - evaluate validation data
 - log metrics
+- optionally clip gradients before optimizer steps
 - optionally early-stop and save checkpoints
 
 Example:
@@ -98,6 +104,7 @@ trainer = Trainer(
     loss_fn=CrossEntropyLoss(),
     optimizer=Adam(model.parameters(), lr=0.01),
     metrics=["accuracy"],
+    clip_grad_norm=1.0,
 )
 
 history = trainer.fit(train_loader, val_loader=val_loader, epochs=20)

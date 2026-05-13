@@ -72,6 +72,7 @@ Updates parameters in place:
 - `SGD`
 - SGD with momentum
 - `Adam`
+- global gradient clipping by L2 norm
 
 Optimizers operate directly on `Tensor.data` and `Tensor.grad`, keeping the
 training loop simple.
@@ -96,6 +97,7 @@ Holds the supervised training loop. `Trainer` supports:
 - validation loaders
 - named metrics such as `"accuracy"`
 - logging intervals
+- optional gradient clipping before optimizer steps
 - early stopping
 - optional best-checkpoint saving
 - `evaluate()` for validation or test sets
