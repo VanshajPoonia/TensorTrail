@@ -85,7 +85,7 @@ scheduler = StepLR(optimizer, step_size=10, gamma=0.5)
 and yields TensorTrail tensors:
 
 ```python
-loader = DataLoader(dataset, batch_size=32, shuffle=True, seed=0)
+loader = DataLoader(dataset, batch_size=32, shuffle=True, drop_last=False, seed=0)
 for x_batch, y_batch in loader:
     ...
 ```

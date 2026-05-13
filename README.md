@@ -282,7 +282,6 @@ See [examples/README.md](examples/README.md) for a guide to each script.
 ## Roadmap
 
 - Add notebook walkthroughs for the autograd internals
-- Add `DataLoader` conveniences such as `drop_last`
 - Add `BCEWithLogitsLoss` for binary classification from logits
 - Add an im2col Conv2D implementation for faster educational comparison
 
@@ -302,4 +301,4 @@ production frameworks.
 - Implemented a topological backward pass, finite-difference gradient checker, and broadcasting-correct gradient reduction to validate autograd correctness across all operations.
 - Developed a modular neural network API with `Tensor`, `Module`, `Linear`, `Conv2D`, pooling, `BatchNorm1D`, `LayerNorm`, `Dropout`, activation layers, `Sequential`, `MSELoss`, `CrossEntropyLoss`, `SGD`, `Adam`, `DataLoader`, and `Trainer`.
 - Added NumPy `.npz` model serialization, Graphviz computation graph export, optional gradient clipping, learning-rate schedules, and a `Trainer` with validation, early stopping, and checkpoint saving.
-- Validated the framework end-to-end with 123 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
+- Validated the framework end-to-end with 130 pytest tests covering autograd, broadcasting, matmul, CNN layers, losses, optimizers, serialization, gradient checking, and trainer workflows.
