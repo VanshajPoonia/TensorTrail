@@ -160,6 +160,20 @@ Calling `backward()` on a scalar output:
 Broadcasting is handled by reducing gradients back to each operand's original
 shape, which is essential for bias terms and normalization parameters.
 
+`gradcheck` validates smooth TensorTrail expressions by comparing analytical
+backpropagation gradients against centered finite differences:
+
+```python
+from tensortrail import Tensor, gradcheck
+
+x = Tensor([1.0, -2.0, 3.0], requires_grad=True)
+result = gradcheck(lambda value: (value * value).sum(), x)
+
+print(result.passed)
+print(result.message)
+print(result.as_dict())
+```
+
 For a deeper walkthrough, see [docs/autograd_explained.md](docs/autograd_explained.md).
 
 ## Architecture Overview

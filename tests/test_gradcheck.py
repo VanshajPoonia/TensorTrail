@@ -17,7 +17,13 @@ def test_gradcheck_passes_for_smooth_expression():
     assert len(result.numerical_gradients) == 2
     assert result.analytical_gradients[0].shape == x.shape
     assert result.numerical_gradients[1].shape == y.shape
-    assert result.as_dict()["max_error"] == result.max_error
+    assert result.message.startswith("gradcheck passed")
+    result_dict = result.as_dict()
+    assert result_dict["passed"] is True
+    assert result_dict["max_error"] == result.max_error
+    assert result_dict["analytical_gradients"] == result.analytical_gradients
+    assert result_dict["numerical_gradients"] == result.numerical_gradients
+    assert result_dict["message"] == result.message
 
 
 def test_gradcheck_passes_for_scalar_square_sum():
@@ -56,6 +62,8 @@ def test_gradcheck_reports_failure_for_nonsmooth_point():
     assert not result.passed
     assert result.max_abs_error > 0.1
     assert result.failures
+    assert result.message.startswith("gradcheck failed")
+    assert result.failures[0] in result.message
 
 
 def test_gradcheck_can_raise_on_failure():

@@ -19,6 +19,7 @@ class GradCheckResult:
     analytical_gradients: list[np.ndarray]
     numerical_gradients: list[np.ndarray]
     max_rel_error: float
+    message: str
     failures: list[str] = field(default_factory=list)
 
     @property
@@ -35,6 +36,7 @@ class GradCheckResult:
             "max_rel_error": self.max_rel_error,
             "analytical_gradients": self.analytical_gradients,
             "numerical_gradients": self.numerical_gradients,
+            "message": self.message,
             "failures": self.failures,
         }
 
@@ -137,20 +139,28 @@ def gradcheck(
                 )
 
         passed = not failures
+        if passed:
+            message = (
+                "gradcheck passed: "
+                f"max_error={max_abs_error:.6g}, max_rel_error={max_rel_error:.6g}"
+            )
+        else:
+            message = (
+                "gradcheck failed: "
+                f"max_error={max_abs_error:.6g}, max_rel_error={max_rel_error:.6g}; "
+                + failures[0]
+            )
         result = GradCheckResult(
             passed=passed,
             max_error=max_abs_error,
             analytical_gradients=analytical,
             numerical_gradients=numerical,
             max_rel_error=max_rel_error,
+            message=message,
             failures=failures,
         )
         if raise_on_fail and not passed:
-            raise AssertionError(
-                "gradcheck failed: "
-                f"max_abs_error={max_abs_error:.6g}, max_rel_error={max_rel_error:.6g}; "
-                + "; ".join(failures[:3])
-            )
+            raise AssertionError(message)
         return result
     finally:
         for tensor, data, grad, requires_grad in zip(
