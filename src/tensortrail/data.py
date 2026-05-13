@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+import math
 
 import numpy as np
 
@@ -34,22 +35,34 @@ class DataLoader:
         batch_size: int = 32,
         shuffle: bool = False,
         seed: int | None = None,
+        drop_last: bool = False,
     ) -> None:
         if batch_size <= 0:
             raise ValueError("DataLoader batch_size must be positive.")
         self.dataset = dataset
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.drop_last = drop_last
         self.rng = np.random.default_rng(seed)
 
-    def __iter__(self) -> Iterator[tuple[Tensor, Tensor]]:
+    def __len__(self) -> int:
+        if self.drop_last:
+            return len(self.dataset) // self.batch_size
+        return math.ceil(len(self.dataset) / self.batch_size)
+
+    def __iter__(self) -> Iterator[Tensor | tuple[Tensor, ...]]:
         indices = np.arange(len(self.dataset))
         if self.shuffle:
             self.rng.shuffle(indices)
         for start in range(0, len(indices), self.batch_size):
             batch_idx = indices[start : start + self.batch_size]
-            x_batch, y_batch = self.dataset[batch_idx]
-            yield Tensor(x_batch), Tensor(y_batch)
+            if self.drop_last and len(batch_idx) < self.batch_size:
+                continue
+            batch = self.dataset[batch_idx]
+            if isinstance(batch, (tuple, list)):
+                yield tuple(Tensor(item) for item in batch)
+            else:
+                yield Tensor(batch)
 
 
 def train_test_split(

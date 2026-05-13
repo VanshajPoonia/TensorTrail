@@ -269,3 +269,20 @@ def test_trainer_steps_scheduler_once_per_completed_epoch():
 
     assert scheduler.last_epoch == 3
     assert optimizer.lr == pytest.approx(0.025)
+
+
+def test_trainer_accepts_dataloader_with_drop_last():
+    dataset = Dataset([[1.0], [2.0], [3.0]], [[0.0], [0.0], [0.0]])
+    loader = DataLoader(dataset, batch_size=2, shuffle=False, drop_last=True)
+    model = Sequential(Linear(1, 1, seed=1))
+    trainer = Trainer(
+        model=model,
+        loss_fn=MSELoss(),
+        optimizer=SGD(model.parameters(), lr=0.01),
+    )
+
+    history = trainer.fit(loader, epochs=2, log_every=None)
+
+    assert len(loader) == 1
+    assert history["epoch"] == [1.0, 2.0]
+    assert len(history["train_loss"]) == 2

@@ -47,6 +47,27 @@ def test_dataloader_returns_tensor_batches():
     assert y_b.shape == (8,)
 
 
+def test_dataloader_len_exact_batches():
+    ds = _make_ds(20, 4)
+    loader = DataLoader(ds, batch_size=5, shuffle=False)
+
+    assert len(loader) == 4
+
+
+def test_dataloader_len_with_partial_batch_by_default():
+    ds = _make_ds(25, 4)
+    loader = DataLoader(ds, batch_size=10, shuffle=False)
+
+    assert len(loader) == 3
+
+
+def test_dataloader_len_drops_partial_batch_when_requested():
+    ds = _make_ds(25, 4)
+    loader = DataLoader(ds, batch_size=10, shuffle=False, drop_last=True)
+
+    assert len(loader) == 2
+
+
 def test_dataloader_rejects_non_positive_batch_size():
     ds = _make_ds(20, 4)
     with pytest.raises(ValueError, match="batch_size"):
@@ -60,6 +81,43 @@ def test_dataloader_last_batch_smaller():
     assert len(batches) == 3
     # last batch has only 5 samples
     assert batches[-1][0].shape[0] == 5
+
+
+def test_dataloader_drops_last_batch_when_requested():
+    ds = _make_ds(25, 4)
+    loader = DataLoader(ds, batch_size=10, shuffle=False, drop_last=True)
+    batches = list(loader)
+
+    assert len(batches) == 2
+    assert all(x_batch.shape[0] == 10 for x_batch, _ in batches)
+
+
+def test_dataloader_empty_dataset_has_no_batches():
+    ds = Dataset(np.empty((0, 4)), np.empty((0,), dtype=int))
+    loader = DataLoader(ds, batch_size=8, shuffle=False)
+
+    assert len(loader) == 0
+    assert list(loader) == []
+
+
+def test_dataloader_supports_feature_only_datasets():
+    class FeatureOnlyDataset:
+        def __init__(self):
+            self.x = np.arange(15, dtype=float).reshape(5, 3)
+
+        def __len__(self):
+            return len(self.x)
+
+        def __getitem__(self, index):
+            return self.x[index]
+
+    loader = DataLoader(FeatureOnlyDataset(), batch_size=2, shuffle=False)
+    batches = list(loader)
+
+    assert len(loader) == 3
+    assert all(isinstance(batch, Tensor) for batch in batches)
+    assert batches[0].shape == (2, 3)
+    assert batches[-1].shape == (1, 3)
 
 
 def test_dataloader_covers_all_samples_without_shuffle():
